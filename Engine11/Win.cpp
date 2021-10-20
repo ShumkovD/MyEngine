@@ -1,16 +1,11 @@
-#include<Windows.h>
-#include<stdio.h>
 
-#define WINDOW_HEIGHT 600
-#define WINDOW_WIDTH 800
-#define MULTISAMPLE_COUNT 2
+#include<stdio.h>
+#include"MyEngine11.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _In_ PWSTR pCmdLine, _In_  INT nCmdShow)
 {
-	//エラー確認
-	HINSTANCE errorCheck;
 	//ウィンドウクラス　作成
 	const wchar_t CLASS_NAME[] = L"WindowClass";
 	WNDCLASS wc;
@@ -37,9 +32,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 		UnregisterClassW(CLASS_NAME, hInstance);
 		return -1;
 	}
-	ShowWindow(hwnd, nCmdShow);
+
 	//エンジンの初期化
-	
+	EngineClass eg;
+	if (!eg.EngineInitialize(hwnd))
+	{
+		UnregisterClassW(CLASS_NAME, hInstance);
+		return -2;
+	}
+	//ウィンドウを示す
+	ShowWindow(hwnd, nCmdShow);
 	//メッセージループ
 	MSG msg = { };
 	while (true)
@@ -58,7 +60,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 		//エンジン処理
 
 		//エンジ描画
-
+		eg.Render();
 	}
 	
 	return 0;
