@@ -36,6 +36,8 @@ private:
 	ComPtr<IDXGISwapChain> swapChain;
 	ComPtr<ID3D11RenderTargetView> rtv;
 
+	D3D11_VIEWPORT vp;
+
 	ComPtr<ID3DBlob> vertexBlob;
 	ComPtr<ID3DBlob> pixelBlob;
 	
@@ -44,16 +46,15 @@ private:
 
 	ComPtr<ID3D11Buffer>	indexBuffer;
 	ComPtr<ID3D11Buffer>	vertexBuffer;
-	ComPtr<ID3D11Buffer>	constantBuffer;
 
-
-
+	ComPtr<ID3D11InputLayout> inputLayout;
+	
 	ComPtr<ID3D11Texture2D>			depthBuffer;
 	ComPtr<ID3D11DepthStencilView>  depthStencil;
 
-	D3D11_VIEWPORT vp;
+	ComPtr<ID3D11Buffer>	constantBuffer;
 
-	ComPtr<ID3D11InputLayout> inputLayout;
+	ComPtr<ID3D11RasterizerState> wireframeState;
 public:
 	bool EngineInitialize(HWND hwnd);
 	bool PipelineInitialize();

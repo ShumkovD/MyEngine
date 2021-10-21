@@ -62,6 +62,7 @@ bool EngineClass::PipelineInitialize()
 		return false;
 	}
 	devcon->IASetInputLayout(inputLayout.Get());
+
 	////Setting Constant Buffer/s
 	D3D11_BUFFER_DESC cbDes;
 	ZeroMemory(&cbDes, sizeof(D3D11_BUFFER_DESC));
@@ -73,6 +74,19 @@ bool EngineClass::PipelineInitialize()
 		OutputDebugStringA("\nFailed to Create Constant Buffer\n\n");
 		return false;
 	}
+	//Creating wireframe Rasterizer state
+	D3D11_RASTERIZER_DESC rasDes;
+	ZeroMemory(&rasDes, sizeof(D3D11_RASTERIZER_DESC));
+	rasDes.FillMode = D3D11_FILL_WIREFRAME;
+	rasDes.CullMode = D3D11_CULL_NONE;
+	hr = dev->CreateRasterizerState(&rasDes, wireframeState.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Constant Buffer\n\n");
+		return false;
+	}
+
+	devcon->RSSetState(wireframeState.Get());
 
 	return true;
 }
