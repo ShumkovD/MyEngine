@@ -52,6 +52,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 		UnregisterClassW(CLASS_NAME, hInstance);
 		return -4;
 	}
+	//ワールドの初期化
+	if (!eg.SettingWorld())
+	{
+		UnregisterClassW(CLASS_NAME, hInstance);
+		return -5;
+	}
 	//ウィンドウを示す
 	ShowWindow(hwnd, nCmdShow);
 	//メッセージループ
@@ -70,7 +76,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 			break;
 		}
 		//エンジン処理
-
+		eg.UpdateScene();
 		//エンジ描画
 		eg.Render();
 	}

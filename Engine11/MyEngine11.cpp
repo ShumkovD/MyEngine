@@ -62,6 +62,17 @@ bool EngineClass::PipelineInitialize()
 		return false;
 	}
 	devcon->IASetInputLayout(inputLayout.Get());
+	////Setting Constant Buffer/s
+	D3D11_BUFFER_DESC cbDes;
+	ZeroMemory(&cbDes, sizeof(D3D11_BUFFER_DESC));
+	cbDes.ByteWidth = sizeof(cbPerObjectBuffer);
+	cbDes.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	hr = dev->CreateBuffer(&cbDes, NULL, constantBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Constant Buffer\n\n");
+		return false;
+	}
 
 	return true;
 }
@@ -71,20 +82,41 @@ bool EngineClass::SceneGraphicsInitialize()
 	HRESULT hr;
 	Vertex myVertex[] =
 	{
-		{-0.5f,-0.5f, 0.5f, 1.0f,0.0f,0.0f,1.0f },
-		{-0.5f,0.5f, 0.5f, 0.0f,1.0f,0.0f,1.0f },
-		{0.5f,0.5f, 0.5f, 0.0f,0.0f,1.0f,1.0f },
-		{0.5f,-0.5f, 0.5f, 1.0f,0.0f,0.0f,1.0f },
-		{0.0f,1.0f, 0.3f, 1.0f,0.0f,0.0f,1.0f },
-		{1.0f,1.0f, 0.3f, 0.0f,1.0f,0.0f,1.0f },
-		{1.0f,-1.0f, 0.3f, 0.0f,1.0f,0.0f,1.0f },
+		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
+		{-1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
+		{+1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
+		{+1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
+		{-1.0f, -1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
+		{-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
+		{+1.0f, +1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
+		{+1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
 	};
 
 	DWORD indices[]
 	{
-		0,1,2,
-		0,2,3,
-		4,5,6
+	// front face
+    0, 1, 2,
+    0, 2, 3,
+
+    // back face
+    4, 6, 5,
+    4, 7, 6,
+
+    // left face
+    4, 5, 1,
+    4, 1, 0,
+
+    // right face
+    3, 2, 6,
+    3, 6, 7,
+
+    // top face
+    1, 5, 6,
+    1, 6, 2,
+
+    // bottom face
+    4, 0, 3, 
+    4, 3, 7
 	};
 
 	////Vertex Buffer-----------------
@@ -253,5 +285,22 @@ bool EngineClass::CreateDepthStencilView()
 		return false;
 	}
 
+	return true;
+}
+
+bool EngineClass::SettingWorld()
+{
+	camPos = XMVectorSet(0.0f,3.0f,-8.0f, 0.0f);
+	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	world = XMMatrixIdentity();
+	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
+	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)WINDOW_WIDTH / WINDOW_HEIGHT, 1.0f, 1000.0f);
+	//Setting Default World Setting
+	WVP = world * camView * camProjection;
+	cbPerObject.WVP = XMMatrixTranspose(WVP);
+	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
+	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 	return true;
 }
