@@ -53,7 +53,7 @@ bool EngineClass::PipelineInitialize()
 	D3D11_INPUT_ELEMENT_DESC ied[]
 	{
 		{"POSITION" , 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR" , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD" , 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	hr = dev->CreateInputLayout(ied, ARRAYSIZE(ied), vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), inputLayout.GetAddressOf());
 	if (FAILED(hr))
@@ -77,7 +77,7 @@ bool EngineClass::PipelineInitialize()
 	//Creating wireframe Rasterizer state
 	D3D11_RASTERIZER_DESC rasDes;
 	ZeroMemory(&rasDes, sizeof(D3D11_RASTERIZER_DESC));
-	rasDes.FillMode = D3D11_FILL_WIREFRAME;
+	rasDes.FillMode = RASTERIZER_FILL;
 	rasDes.CullMode = D3D11_CULL_NONE;
 	hr = dev->CreateRasterizerState(&rasDes, wireframeState.GetAddressOf());
 	if (FAILED(hr))
@@ -96,41 +96,68 @@ bool EngineClass::SceneGraphicsInitialize()
 	HRESULT hr;
 	Vertex myVertex[] =
 	{
-		{-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-		{-1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-		{+1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-		{+1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-		{-1.0f, -1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-		{-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f, 1.0f},
-		{+1.0f, +1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-		{+1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
+	            // Front Face
+            {-1.0f, -1.0f, -1.0f, 0.0f, 1.0f},
+            {-1.0f,  1.0f, -1.0f, 0.0f, 0.0f},
+            { 1.0f,  1.0f, -1.0f, 1.0f, 0.0f},
+            { 1.0f, -1.0f, -1.0f, 1.0f, 1.0f},
+    
+            // Back Face
+            {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f},
+            { 1.0f, -1.0f, 1.0f, 0.0f, 1.0f},
+            { 1.0f,  1.0f, 1.0f, 0.0f, 0.0f},
+            {-1.0f,  1.0f, 1.0f, 1.0f, 0.0f},
+    
+            // Top Face
+            {-1.0f, 1.0f, -1.0f, 0.0f, 1.0f},
+            {-1.0f, 1.0f,  1.0f, 0.0f, 0.0f},
+            { 1.0f, 1.0f,  1.0f, 1.0f, 0.0f},
+            { 1.0f, 1.0f, -1.0f, 1.0f, 1.0f},
+    
+            // Bottom Face
+            {-1.0f, -1.0f, -1.0f, 1.0f, 1.0f},
+            { 1.0f, -1.0f, -1.0f, 0.0f, 1.0f},
+            { 1.0f, -1.0f,  1.0f, 0.0f, 0.0f},
+            {-1.0f, -1.0f,  1.0f, 1.0f, 0.0f},
+    
+            // Left Face
+            {-1.0f, -1.0f,  1.0f, 0.0f, 1.0f},
+            {-1.0f,  1.0f,  1.0f, 0.0f, 0.0f},
+            {-1.0f,  1.0f, -1.0f, 1.0f, 0.0f},
+            {-1.0f, -1.0f, -1.0f, 1.0f, 1.0f},
+    
+            // Right Face
+            { 1.0f, -1.0f, -1.0f, 0.0f, 1.0f},
+            { 1.0f,  1.0f, -1.0f, 0.0f, 0.0f},
+            { 1.0f,  1.0f,  1.0f, 1.0f, 0.0f},
+            { 1.0f, -1.0f,  1.0f, 1.0f, 1.0f},
 	};
 
 	DWORD indices[]
 	{
-	// front face
-    0, 1, 2,
-    0, 2, 3,
-
-    // back face
-    4, 6, 5,
-    4, 7, 6,
-
-    // left face
-    4, 5, 1,
-    4, 1, 0,
-
-    // right face
-    3, 2, 6,
-    3, 6, 7,
-
-    // top face
-    1, 5, 6,
-    1, 6, 2,
-
-    // bottom face
-    4, 0, 3, 
-    4, 3, 7
+			// Front Face
+            0,  1,  2,
+            0,  2,  3,
+    
+            // Back Face
+            4,  5,  6,
+            4,  6,  7,
+    
+            // Top Face
+            8,  9, 10,
+            8, 10, 11,
+    
+            // Bottom Face
+            12, 13, 14,
+            12, 14, 15,
+    
+            // Left Face
+            16, 17, 18,
+            16, 18, 19,
+    
+            // Right Face
+            20, 21, 22,
+            20, 22, 23
 	};
 
 	////Vertex Buffer-----------------
@@ -181,6 +208,10 @@ bool EngineClass::SceneGraphicsInitialize()
 	devcon->RSSetViewports(1, &vp);
 	//-------------------------------------
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
+	if (!LoadingTexture())
+		return false;
+
 	return true;
 }
 
@@ -316,5 +347,34 @@ bool EngineClass::SettingWorld()
 	cbPerObject.WVP = XMMatrixTranspose(WVP);
 	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+	return true;
+}
+
+bool EngineClass::LoadingTexture()
+{
+	HRESULT hr;
+	hr = CreateDDSTextureFromFile(dev.Get(), L"../Resources/Sprite/Metal.dds", NULL, resourceTexture.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Load Texture\n\n");
+		return false;
+	}
+
+	D3D11_SAMPLER_DESC samplerDesc;
+	ZeroMemory(&samplerDesc, sizeof(D3D11_SAMPLER_DESC));
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	hr = dev->CreateSamplerState(&samplerDesc, texSamplerState.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create sampler\n\n");
+		return false;
+	}
+
 	return true;
 }

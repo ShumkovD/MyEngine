@@ -1,10 +1,13 @@
 struct OUTPUT
 {
 	float4 pos : SV_POSITION;
-	float4 color : COLOR;
+	float2 uv  : TEXCOORD0;
 };
 
-float4 main(OUTPUT output) : SV_TARGET
+SamplerState ObjSamplerState : register(s0);
+Texture2D ObjTexture: register(t0);
+
+float4 main(OUTPUT input) : SV_TARGET
 {
-	return output.color;
+	return ObjTexture.Sample(ObjSamplerState, input.uv);
 }

@@ -6,14 +6,14 @@ cbuffer cbPerObject
 struct OUTPUT
 {
 	float4 pos : SV_POSITION;
-	float4 color : COLOR;
+	float2 uv :  TEXCOORD0;
 };
 
-OUTPUT main(float4 pos : POSITION, float4 color : COLOR)
+OUTPUT main(float4 pos : POSITION, float2 uv : TEXCOORD) 
 {
 	OUTPUT output;
 	output.pos = mul(pos, WVP);
-	output.color = color;
+	output.uv = uv;
 
 
 	return output;

@@ -3,7 +3,7 @@
 
 void EngineClass::UpdateScene()
 {
-	rot += 0.00005;
+	rot += 0.00005f;
 	if (rot > 6.28)
 		rot = 0;
 
@@ -30,13 +30,20 @@ void EngineClass::Render()
 	WVP = cube1World * camView * camProjection;
 	cbPerObject.WVP = XMMatrixTranspose(WVP);
 	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
+
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+	devcon->PSSetShaderResources(0, 1, resourceTexture.GetAddressOf());
+	devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
+
 	devcon->DrawIndexed(36, 0, 0);
 
 	WVP = cube2World * camView * camProjection;
 	cbPerObject.WVP = XMMatrixTranspose(WVP);
 	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
+
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+	devcon->PSSetShaderResources(0, 1, resourceTexture.GetAddressOf());
+	devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 
 	devcon->DrawIndexed(36, 0, 0);
 	swapChain->Present(0, 0);

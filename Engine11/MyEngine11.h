@@ -5,13 +5,16 @@
 #include<Windows.h>
 #include<d3d11.h>
 #include<d3dcompiler.h>
-#include"../SDK/Include/DDSTextureLoader.h"
 #include<wrl/client.h>
 #include<DirectXMath.h>
+#include"../SDK/Include/DDSTextureLoader.h"
 
-#define WINDOW_HEIGHT 600
-#define WINDOW_WIDTH 800
-#define MULTISAMPLE_COUNT 2
+#define WINDOW_HEIGHT 1024
+#define WINDOW_WIDTH 1920
+#define MULTISAMPLE_COUNT 4
+
+// D3D11_FILL_WIREFRAME | D3D11_FILL_SOLID
+#define RASTERIZER_FILL D3D11_FILL_SOLID
 
 using namespace Microsoft;
 using namespace WRL;
@@ -19,7 +22,7 @@ using namespace DirectX;
 
 struct Vertex
 {
-	float X, Y, Z, r, g, b, a;
+	float X, Y, Z, U, V;
 };
 
 struct cbPerObjectBuffer
@@ -55,6 +58,10 @@ private:
 	ComPtr<ID3D11Buffer>	constantBuffer;
 
 	ComPtr<ID3D11RasterizerState> wireframeState;
+
+	ComPtr<ID3D11ShaderResourceView> resourceTexture;
+	ComPtr<ID3D11SamplerState> texSamplerState;
+
 public:
 	bool EngineInitialize(HWND hwnd);
 	bool PipelineInitialize();
@@ -64,6 +71,7 @@ private:
 	bool CreateDepthStencilView();
 	bool CreateDeviceAndSwapChain(HWND hwnd);
 	bool CreateRenderTargetView();
+	bool LoadingTexture();
 public:
 	void UpdateScene();
 	void Render();
