@@ -40,6 +40,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 		UnregisterClassW(CLASS_NAME, hInstance);
 		return -2;
 	}
+	//パイプラインの初期化
+	if (!eg.PipelineInitialize())
+	{
+		UnregisterClassW(CLASS_NAME, hInstance);
+		return -3;
+	}
+	//グラフィクスの初期化
+	if (!eg.SceneGraphicsInitialize())
+	{
+		UnregisterClassW(CLASS_NAME, hInstance);
+		return -4;
+	}
 	//ウィンドウを示す
 	ShowWindow(hwnd, nCmdShow);
 	//メッセージループ

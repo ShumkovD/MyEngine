@@ -1,5 +1,6 @@
 #include"MyEngine11.h"
 
+bool LoadShader(LPCWSTR fileDirectory, LPCSTR startPoint, LPCSTR profile, ComPtr<ID3DBlob> *shaderBlob);
 
 bool EngineClass::EngineInitialize(HWND hwnd)
 {
@@ -13,8 +14,121 @@ bool EngineClass::EngineInitialize(HWND hwnd)
 	return true;
 }
 
+bool EngineClass::PipelineInitialize()
+{
+	HRESULT hr;
 
+	//シェーダー　作成--------------------
+	if (!LoadShader(L"VertexShader.hlsl", "main", "vs_5_0", &vertexBlob))
+	{
+		OutputDebugStringA("\nFailed to Load Vertex Shader\n\n");
+		return false;
+	}
+	if (!LoadShader(L"PixelShader.hlsl", "main", "ps_5_0", &pixelBlob))
+	{
+		OutputDebugStringA("\nFailed to Load Pixel Shader\n\n");
+		return false;
+	}
+	//-----------------
+	hr = dev->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), NULL, vertexShader.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Vertex Shader\n\n");
+		return false;
+	}
+	hr = dev->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), NULL, pixelShader.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Pixel Shader\n\n");
+		return false;
+	}
+	//------------------
+	devcon->VSSetShader(vertexShader.Get(), 0, 0);
+	devcon->PSSetShader(pixelShader.Get(), 0, 0);
+	//------------------
+	//Input Layout 作成
 
+	D3D11_INPUT_ELEMENT_DESC ied[]
+	{
+		{"POSITION" , 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR" , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+	hr = dev->CreateInputLayout(ied, ARRAYSIZE(ied), vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), inputLayout.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Input Layout\n\n");
+		return false;
+	}
+	devcon->IASetInputLayout(inputLayout.Get());
+
+	return true;
+}
+
+bool EngineClass::SceneGraphicsInitialize()
+{
+	HRESULT hr;
+	Vertex myVertex[] =
+	{
+		{-0.5f,-0.5f, 0.5f, 1.0f,0.0f,0.0f,1.0f },
+		{-0.5f,0.5f, 0.5f, 0.0f,1.0f,0.0f,1.0f },
+		{0.5f,0.5f, 0.5f, 0.0f,0.0f,1.0f,1.0f },
+		{0.5f,-0.5f, 0.5f, 1.0f,0.0f,0.0f,1.0f },
+	};
+
+	DWORD indices[]
+	{
+		0,1,2,
+		0,2,3
+	};
+
+	////Vertex Buffer-----------------
+	D3D11_BUFFER_DESC vertexDes;
+	ZeroMemory(&vertexDes, sizeof(D3D11_BUFFER_DESC));
+	vertexDes.ByteWidth = sizeof(Vertex) * ARRAYSIZE(myVertex);
+	vertexDes.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	//Subresource
+	D3D11_SUBRESOURCE_DATA vertexResource;
+	ZeroMemory(&vertexResource, sizeof(D3D11_SUBRESOURCE_DATA));
+	vertexResource.pSysMem = myVertex;
+	//Creation
+	hr = dev->CreateBuffer(&vertexDes, &vertexResource, vertexBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Vertex Buffer\n\n");
+		return false;
+	}
+	//Setting
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	devcon->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	////Index Buffer-----------------
+	D3D11_BUFFER_DESC indexDes;
+	ZeroMemory(&indexDes, sizeof(D3D11_BUFFER_DESC));
+	indexDes.ByteWidth = sizeof(DWORD) * ARRAYSIZE(indices);
+	indexDes.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	//Subresource
+	D3D11_SUBRESOURCE_DATA pixelResource;
+	ZeroMemory(&pixelResource, sizeof(D3D11_SUBRESOURCE_DATA));
+	pixelResource.pSysMem = indices;
+	//Creation
+	dev->CreateBuffer(&indexDes, &pixelResource, indexBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create Index Buffer\n\n");
+		return false;
+	}//Setting
+	devcon->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	////ViewPort-----------------------------
+	ZeroMemory(&vp, sizeof(vp));
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	vp.Width = WINDOW_WIDTH;
+	vp.Height = WINDOW_HEIGHT;
+	devcon->RSSetViewports(1, &vp);
+	//-------------------------------------
+	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	return true;
+}
 
 
 bool EngineClass::CreateDeviceAndSwapChain(HWND hwnd)
@@ -48,7 +162,7 @@ bool EngineClass::CreateDeviceAndSwapChain(HWND hwnd)
 	hr = D3D11CreateDeviceAndSwapChain(0,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		NULL,
+		D3D11_CREATE_DEVICE_DEBUG,
 		NULL,
 		NULL,
 		D3D11_SDK_VERSION,
@@ -84,5 +198,20 @@ bool EngineClass::CreateRenderTargetView()
 		return false;
 	}
 	pBackBuffer->Release();
+	return true;
+}
+
+bool LoadShader(LPCWSTR fileDirectory, LPCSTR startPoint,LPCSTR profile, ComPtr<ID3DBlob> *shaderBlob)
+{
+	HRESULT hr;
+	ComPtr<ID3DBlob> outBlob = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	hr = D3DCompileFromFile(fileDirectory, NULL, NULL, startPoint, profile, NULL, NULL, outBlob.GetAddressOf(), errorBlob.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		return false;
+	}
+	*shaderBlob = outBlob;
 	return true;
 }

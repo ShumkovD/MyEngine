@@ -15,6 +15,12 @@
 using namespace Microsoft;
 using namespace WRL;
 
+struct Vertex
+{
+	float X, Y, Z, r, g, b, a;
+};
+
+
 class EngineClass
 {
 private:
@@ -23,15 +29,27 @@ private:
 	ComPtr<IDXGISwapChain> swapChain;
 	ComPtr<ID3D11RenderTargetView> rtv;
 
+	ComPtr<ID3DBlob> vertexBlob;
+	ComPtr<ID3DBlob> pixelBlob;
+	
+	ComPtr<ID3D11VertexShader> vertexShader;
+	ComPtr<ID3D11PixelShader> pixelShader;
+
+	ComPtr<ID3D11Buffer>	indexBuffer;
+	ComPtr<ID3D11Buffer>	vertexBuffer;
+
 	D3D11_VIEWPORT vp;
 
-
+	ComPtr<ID3D11InputLayout> inputLayout;
 
 public:
 	bool EngineInitialize(HWND hwnd);
+	bool PipelineInitialize();
+	bool SceneGraphicsInitialize();
 private:
 	bool CreateDeviceAndSwapChain(HWND hwnd);
 	bool CreateRenderTargetView();
+
 public:
 	void InitScene();
 	void Render();
