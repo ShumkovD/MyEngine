@@ -8,8 +8,10 @@ bool EngineClass::EngineInitialize(HWND hwnd)
 		return false;
 	if (!CreateRenderTargetView())
 		return false;
+	if (!CreateDepthStencilView())
+		return false;
 
-	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), NULL);
+	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
 
 	return true;
 }
@@ -73,12 +75,16 @@ bool EngineClass::SceneGraphicsInitialize()
 		{-0.5f,0.5f, 0.5f, 0.0f,1.0f,0.0f,1.0f },
 		{0.5f,0.5f, 0.5f, 0.0f,0.0f,1.0f,1.0f },
 		{0.5f,-0.5f, 0.5f, 1.0f,0.0f,0.0f,1.0f },
+		{0.0f,1.0f, 0.3f, 1.0f,0.0f,0.0f,1.0f },
+		{1.0f,1.0f, 0.3f, 0.0f,1.0f,0.0f,1.0f },
+		{1.0f,-1.0f, 0.3f, 0.0f,1.0f,0.0f,1.0f },
 	};
 
 	DWORD indices[]
 	{
 		0,1,2,
-		0,2,3
+		0,2,3,
+		4,5,6
 	};
 
 	////Vertex Buffer-----------------
@@ -124,6 +130,8 @@ bool EngineClass::SceneGraphicsInitialize()
 	vp.TopLeftY = 0;
 	vp.Width = WINDOW_WIDTH;
 	vp.Height = WINDOW_HEIGHT;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
 	devcon->RSSetViewports(1, &vp);
 	//-------------------------------------
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -213,5 +221,37 @@ bool LoadShader(LPCWSTR fileDirectory, LPCSTR startPoint,LPCSTR profile, ComPtr<
 		return false;
 	}
 	*shaderBlob = outBlob;
+	return true;
+}
+
+bool EngineClass::CreateDepthStencilView()
+{
+	HRESULT hr;
+	D3D11_TEXTURE2D_DESC depthBufferDesc;
+	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthBufferDesc.Width = WINDOW_WIDTH;
+	depthBufferDesc.Height = WINDOW_HEIGHT;
+	depthBufferDesc.MipLevels = 1;
+	depthBufferDesc.ArraySize = 1;
+	depthBufferDesc.SampleDesc.Count = MULTISAMPLE_COUNT;
+	depthBufferDesc.SampleDesc.Quality = 0;
+	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthBufferDesc.CPUAccessFlags = 0;
+	depthBufferDesc.MiscFlags = 0;
+
+	hr = dev->CreateTexture2D(&depthBufferDesc, NULL, depthBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create Depth Stencil buffer\n\n");
+		return false;
+	}
+	hr = dev->CreateDepthStencilView(depthBuffer.Get(), NULL, depthStencil.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create Depth Stencil View\n\n");
+		return false;
+	}
+
 	return true;
 }

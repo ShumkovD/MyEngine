@@ -38,6 +38,9 @@ private:
 	ComPtr<ID3D11Buffer>	indexBuffer;
 	ComPtr<ID3D11Buffer>	vertexBuffer;
 
+	ComPtr<ID3D11Texture2D>			depthBuffer;
+	ComPtr<ID3D11DepthStencilView>  depthStencil;
+
 	D3D11_VIEWPORT vp;
 
 	ComPtr<ID3D11InputLayout> inputLayout;
@@ -47,6 +50,7 @@ public:
 	bool PipelineInitialize();
 	bool SceneGraphicsInitialize();
 private:
+	bool CreateDepthStencilView();
 	bool CreateDeviceAndSwapChain(HWND hwnd);
 	bool CreateRenderTargetView();
 
