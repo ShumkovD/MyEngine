@@ -211,6 +211,10 @@ bool EngineClass::SceneGraphicsInitialize()
 	
 	if (!LoadingTexture())
 		return false;
+	if (!TCreatingBlending())
+		return false;
+	if (!LoadFont())
+		return false;
 
 	return true;
 }
@@ -353,7 +357,7 @@ bool EngineClass::SettingWorld()
 bool EngineClass::LoadingTexture()
 {
 	HRESULT hr;
-	hr = CreateDDSTextureFromFile(dev.Get(), L"../Resources/Sprite/Metal.dds", NULL, resourceTexture.GetAddressOf());
+	hr = CreateDDSTextureFromFile(dev.Get(), L"../Resources/Sprite/brain.dds", NULL, resourceTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Load Texture\n\n");
@@ -375,6 +379,67 @@ bool EngineClass::LoadingTexture()
 		OutputDebugStringA("\nFailed to create sampler\n\n");
 		return false;
 	}
+
+	return true;
+}
+
+bool EngineClass::TCreatingBlending()
+{
+	HRESULT hr;
+	D3D11_BLEND_DESC bds;
+	ZeroMemory(&bds, sizeof(D3D11_BLEND_DESC));
+	D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+	ZeroMemory(&rtbd, sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
+	rtbd.BlendEnable = true;
+	rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
+	rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+	rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	bds.AlphaToCoverageEnable = false;
+	bds.RenderTarget[0] = rtbd;
+	hr = dev->CreateBlendState(&bds, transparent.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create transparent blend state\n\n");
+		return false;
+	}
+	//Cull States
+	D3D11_RASTERIZER_DESC rastDes;
+	ZeroMemory(&rastDes, sizeof(D3D11_RASTERIZER_DESC));
+	rastDes.CullMode = D3D11_CULL_BACK;
+	rastDes.FillMode = RASTERIZER_FILL;
+
+	rastDes.FrontCounterClockwise = true;
+	hr = dev->CreateRasterizerState(&rastDes, CCWCull.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create CCWCull\n\n");
+		return false;
+	}
+	rastDes.FrontCounterClockwise = false;
+	hr = dev->CreateRasterizerState(&rastDes, CCWCull.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create CWCull\n\n");
+		return false;
+	}
+	rastDes.CullMode = D3D11_CULL_NONE;
+	hr = dev->CreateRasterizerState(&rastDes, NoCull.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to create NoCull\n\n");
+		return false;
+	}
+
+	return true;
+}
+
+bool EngineClass::LoadFont()
+{
 
 	return true;
 }

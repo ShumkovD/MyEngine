@@ -24,8 +24,13 @@ void EngineClass::UpdateScene()
 void EngineClass::Render()
 {
 	float color[] = { 0,0,0,1 };
+	float blendFactor[] = { 1.0f,1.0f,1.0f,1.0f };
 	devcon->ClearRenderTargetView(rtv.Get(), color);
 	devcon->ClearDepthStencilView(depthStencil.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	devcon->RSSetState(NULL);
+	//Setting object withot alpha channel
+	devcon->RSSetState(NoCull.Get());
 
 	WVP = cube1World * camView * camProjection;
 	cbPerObject.WVP = XMMatrixTranspose(WVP);
@@ -34,8 +39,10 @@ void EngineClass::Render()
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 	devcon->PSSetShaderResources(0, 1, resourceTexture.GetAddressOf());
 	devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
-
 	devcon->DrawIndexed(36, 0, 0);
+
+
+
 
 	WVP = cube2World * camView * camProjection;
 	cbPerObject.WVP = XMMatrixTranspose(WVP);
@@ -44,7 +51,8 @@ void EngineClass::Render()
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 	devcon->PSSetShaderResources(0, 1, resourceTexture.GetAddressOf());
 	devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
-
 	devcon->DrawIndexed(36, 0, 0);
+
 	swapChain->Present(0, 0);
+
 }
