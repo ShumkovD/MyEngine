@@ -12,15 +12,16 @@
 #include<DirectXMath.h>
 #include<utility>
 #include<DDSTextureLoader.h>
-#include<d2d1.h>
-#include<dwrite.h>
+#include <SpriteBatch.h>
+#include <SpriteFont.h>
+#include <string>
 
 #define WINDOW_HEIGHT 1024
 #define WINDOW_WIDTH 1920
 #define MULTISAMPLE_COUNT 4
 
 // D3D11_FILL_WIREFRAME | D3D11_FILL_SOLID
-#define RASTERIZER_FILL D3D11_FILL_SOLID
+#define RASTERIZER_FILL D3D11_FILL_WIREFRAME
 
 using namespace Microsoft;
 using namespace WRL;
@@ -72,7 +73,8 @@ private:
 	ComPtr<ID3D11RasterizerState1> CWCull;
 	ComPtr<ID3D11RasterizerState1> NoCull;
 
-
+	std::unique_ptr<SpriteBatch>	spriteBatch;
+	std::unique_ptr<SpriteFont>		spriteFont;
 
 	ComPtr<ID3D11ShaderResourceView> resourceTexture;
 	ComPtr<ID3D11SamplerState> texSamplerState;
@@ -88,10 +90,13 @@ private:
 	bool CreateRenderTargetView();
 	bool LoadingTexture();
 	bool TCreatingBlending();	//T ransparency
-	bool LoadFont(HWND hwnd);
-	void DrawMyText();
+	void DrawMyText(const char* text);
+	void StartTimer();
+	double GetTime();
+	double GetFrameTime();
 public:
-	void UpdateScene();
+	double Timer();
+	void UpdateScene(double time);
 	void Render();
 public:
 	//çsóÒ
@@ -116,7 +121,13 @@ public:
 	float rot = 0.005f;
 
 public:
-	const wchar_t* wszText;
-	UINT32 cTextLength;
-	RECT rc;
+	double countsPerSecond = 0.0;
+	__int64 CounterStart = 0;
+
+	int frameCount = 0;
+	int fps = 0;
+
+	__int64 frameTimeOld = 0;
+	double frameTime;
+
 };

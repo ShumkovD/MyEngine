@@ -74,8 +74,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 			DestroyWindow(hwnd);
 			break;
 		}
+
+
 		//エンジン処理
-		eg.UpdateScene();
+		eg.UpdateScene(eg.Timer());
 		//エンジ描画
 		eg.Render();
 	}

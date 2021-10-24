@@ -10,8 +10,7 @@ bool EngineClass::EngineInitialize(HWND hwnd)
 		return false;
 	if (!CreateDepthStencilView())
 		return false;
-	if (!LoadFont(hwnd))
-		return false;
+
 
 	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
 
@@ -47,8 +46,7 @@ bool EngineClass::PipelineInitialize()
 		return false;
 	}
 	//------------------
-	devcon->VSSetShader(vertexShader.Get(), 0, 0);
-	devcon->PSSetShader(pixelShader.Get(), 0, 0);
+	
 	//------------------
 	//Input Layout çÏê¨
 
@@ -216,6 +214,8 @@ bool EngineClass::SceneGraphicsInitialize()
 	if (!TCreatingBlending())
 		return false;
 
+	spriteBatch = std::make_unique<SpriteBatch>(devcon.Get());
+	spriteFont = std::make_unique<SpriteFont>(dev.Get(), L"../Resources/Font/Sans32.spritefont");
 
 	return true;
 }
@@ -344,25 +344,42 @@ bool EngineClass::CreateDepthStencilView()
 
 bool EngineClass::SettingWorld()
 {
-	camPos = XMVectorSet(0.0f,3.0f,-8.0f, 0.0f);
+	devcon->VSSetShader(vertexShader.Get(), 0, 0);
+	devcon->PSSetShader(pixelShader.Get(), 0, 0);
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	devcon->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	devcon->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	devcon->IASetInputLayout(inputLayout.Get());
+	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	devcon->RSSetState(NULL);
+	devcon->OMSetDepthStencilState(NULL, 0);
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	devcon->RSSetViewports(1, &vp);
+	//Setting Default World Setting
+	camPos = XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
 	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	world = XMMatrixIdentity();
 	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
 	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)WINDOW_WIDTH / WINDOW_HEIGHT, 1.0f, 1000.0f);
-	//Setting Default World Setting
+
 	WVP = world * camView * camProjection;
 	cbPerObject.WVP = XMMatrixTranspose(WVP);
+
 	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
+
 	return true;
 }
 
 bool EngineClass::LoadingTexture()
 {
 	HRESULT hr;
-	hr = CreateDDSTextureFromFile(dev.Get(), L"../Resources/Sprite/brain.dds", NULL, resourceTexture.GetAddressOf());
+	hr = CreateDDSTextureFromFile(dev.Get(), L"../Resources/Sprite/Brain.dds", NULL, resourceTexture.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Load Texture\n\n");
@@ -444,14 +461,49 @@ bool EngineClass::TCreatingBlending()
 }
 
 
-	bool EngineClass::LoadFont(HWND hwnd)
+	void EngineClass::DrawMyText(const char* text)
 	{
-		
-		return true;
+		FXMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		GXMVECTOR size = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+		spriteFont->DrawString(spriteBatch.get(), text, pos, Colors::White, 0, pos, size);
+	}
+	void EngineClass::StartTimer()
+	{
+		LARGE_INTEGER frequencyCount;
+		QueryPerformanceFrequency(&frequencyCount);
+		countsPerSecond = (float)(frequencyCount.QuadPart);
+		QueryPerformanceCounter(&frequencyCount);
+		CounterStart = frequencyCount.QuadPart;
+	}
+	double EngineClass::GetTime()
+	{
+		LARGE_INTEGER currentTime;
+		QueryPerformanceCounter(&currentTime);
+		return double(currentTime.QuadPart - CounterStart) / countsPerSecond;
+	}
+	double EngineClass::GetFrameTime()
+	{
+		LARGE_INTEGER currentTime;
+		__int64 tickCount;
+		QueryPerformanceCounter(&currentTime);
+
+		tickCount = currentTime.QuadPart - frameTimeOld;
+		frameTimeOld = currentTime.QuadPart;
+		if (tickCount < 0.0f)
+			tickCount = 0.0f;
+		return float(tickCount) / countsPerSecond;
 	}
 
-
-	void EngineClass::DrawMyText()
+	double EngineClass::Timer()
 	{
-	
+		frameCount++;
+		if (GetTime() > 1.0f)
+		{
+			fps = frameCount;
+			frameCount = 0;
+			StartTimer();
+		}
+
+		frameTime = GetFrameTime();
+		return frameTime;
 	}
