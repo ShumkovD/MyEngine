@@ -53,6 +53,9 @@ void EngineClass::Render()
 	devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 	devcon->DrawIndexed(36, 0, 0);
 
+	
+
+
 	swapChain->Present(0, 0);
 
 }

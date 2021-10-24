@@ -2,6 +2,8 @@
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "atls.lib")
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
 
 #include<Windows.h>
 #include<d3d11.h>
@@ -10,15 +12,15 @@
 #include<DirectXMath.h>
 #include<utility>
 #include<DDSTextureLoader.h>
-#include<SpriteFont.h>
-#include<SpriteBatch.h>
+#include<d2d1.h>
+#include<dwrite.h>
 
 #define WINDOW_HEIGHT 1024
 #define WINDOW_WIDTH 1920
 #define MULTISAMPLE_COUNT 4
 
 // D3D11_FILL_WIREFRAME | D3D11_FILL_SOLID
-#define RASTERIZER_FILL D3D11_FILL_WIREFRAME
+#define RASTERIZER_FILL D3D11_FILL_SOLID
 
 using namespace Microsoft;
 using namespace WRL;
@@ -38,8 +40,9 @@ class EngineClass
 {
 private:
 	
-	ComPtr<ID3D11Device> dev;
-	ComPtr<ID3D11DeviceContext> devcon;
+	ComPtr<ID3D11Device1> dev;
+	ComPtr<ID3D11DeviceContext1> devcon;
+
 	ComPtr<IDXGISwapChain> swapChain;
 	ComPtr<ID3D11RenderTargetView> rtv;
 
@@ -61,13 +64,15 @@ private:
 
 	ComPtr<ID3D11Buffer>	constantBuffer;
 
-	ComPtr<ID3D11RasterizerState> wireframeState;
+	ComPtr<ID3D11RasterizerState1> wireframeState;
 	
-	ComPtr<ID3D11BlendState> transparent;
+	ComPtr<ID3D11BlendState1> transparent;
 	
-	ComPtr<ID3D11RasterizerState> CCWCull;
-	ComPtr<ID3D11RasterizerState> CWCull;
-	ComPtr<ID3D11RasterizerState> NoCull;
+	ComPtr<ID3D11RasterizerState1> CCWCull;
+	ComPtr<ID3D11RasterizerState1> CWCull;
+	ComPtr<ID3D11RasterizerState1> NoCull;
+
+
 
 	ComPtr<ID3D11ShaderResourceView> resourceTexture;
 	ComPtr<ID3D11SamplerState> texSamplerState;
@@ -83,7 +88,8 @@ private:
 	bool CreateRenderTargetView();
 	bool LoadingTexture();
 	bool TCreatingBlending();	//T ransparency
-	bool LoadFont();
+	bool LoadFont(HWND hwnd);
+	void DrawMyText();
 public:
 	void UpdateScene();
 	void Render();
@@ -109,4 +115,8 @@ public:
 	XMMATRIX scaling;
 	float rot = 0.005f;
 
+public:
+	const wchar_t* wszText;
+	UINT32 cTextLength;
+	RECT rc;
 };

@@ -10,6 +10,8 @@ bool EngineClass::EngineInitialize(HWND hwnd)
 		return false;
 	if (!CreateDepthStencilView())
 		return false;
+	if (!LoadFont(hwnd))
+		return false;
 
 	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
 
@@ -75,14 +77,14 @@ bool EngineClass::PipelineInitialize()
 		return false;
 	}
 	//Creating wireframe Rasterizer state
-	D3D11_RASTERIZER_DESC rasDes;
-	ZeroMemory(&rasDes, sizeof(D3D11_RASTERIZER_DESC));
+	D3D11_RASTERIZER_DESC1 rasDes;
+	ZeroMemory(&rasDes, sizeof(D3D11_RASTERIZER_DESC1));
 	rasDes.FillMode = RASTERIZER_FILL;
 	rasDes.CullMode = D3D11_CULL_NONE;
-	hr = dev->CreateRasterizerState(&rasDes, wireframeState.GetAddressOf());
+	hr = dev->CreateRasterizerState1(&rasDes, wireframeState.GetAddressOf());
 	if (FAILED(hr))
 	{
-		OutputDebugStringA("\nFailed to Create Constant Buffer\n\n");
+		OutputDebugStringA("\nFailed to Create WireFrame Rasteriser State\n\n");
 		return false;
 	}
 
@@ -213,8 +215,7 @@ bool EngineClass::SceneGraphicsInitialize()
 		return false;
 	if (!TCreatingBlending())
 		return false;
-	if (!LoadFont())
-		return false;
+
 
 	return true;
 }
@@ -223,6 +224,8 @@ bool EngineClass::SceneGraphicsInitialize()
 bool EngineClass::CreateDeviceAndSwapChain(HWND hwnd)
 {
 	HRESULT hr;
+	ComPtr<ID3D11Device> dev11;
+	ComPtr<ID3D11DeviceContext> devcon11;
 	// // スワップチェーンとデバイス　作成
 //バックバッファ
 	DXGI_MODE_DESC backBuffer;
@@ -257,14 +260,16 @@ bool EngineClass::CreateDeviceAndSwapChain(HWND hwnd)
 		D3D11_SDK_VERSION,
 		&swapchainDesc,
 		swapChain.GetAddressOf(),
-		dev.GetAddressOf(),
+		dev11.GetAddressOf(),
 		NULL,
-		devcon.GetAddressOf());
+		devcon11.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Create Device And SwapChain\n\n");
 		return false;
 	}
+	dev11.As(&dev);
+	devcon11.As(&devcon);
 
 	return true;
 }
@@ -386,9 +391,9 @@ bool EngineClass::LoadingTexture()
 bool EngineClass::TCreatingBlending()
 {
 	HRESULT hr;
-	D3D11_BLEND_DESC bds;
-	ZeroMemory(&bds, sizeof(D3D11_BLEND_DESC));
-	D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+	D3D11_BLEND_DESC1 bds;
+	ZeroMemory(&bds, sizeof(D3D11_BLEND_DESC1));
+	D3D11_RENDER_TARGET_BLEND_DESC1 rtbd;
 	ZeroMemory(&rtbd, sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
 	rtbd.BlendEnable = true;
 	rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
@@ -401,34 +406,34 @@ bool EngineClass::TCreatingBlending()
 
 	bds.AlphaToCoverageEnable = false;
 	bds.RenderTarget[0] = rtbd;
-	hr = dev->CreateBlendState(&bds, transparent.GetAddressOf());
+	hr = dev->CreateBlendState1(&bds, transparent.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to create transparent blend state\n\n");
 		return false;
 	}
 	//Cull States
-	D3D11_RASTERIZER_DESC rastDes;
-	ZeroMemory(&rastDes, sizeof(D3D11_RASTERIZER_DESC));
+	D3D11_RASTERIZER_DESC1 rastDes;
+	ZeroMemory(&rastDes, sizeof(D3D11_RASTERIZER_DESC1));
 	rastDes.CullMode = D3D11_CULL_BACK;
 	rastDes.FillMode = RASTERIZER_FILL;
 
 	rastDes.FrontCounterClockwise = true;
-	hr = dev->CreateRasterizerState(&rastDes, CCWCull.GetAddressOf());
+	hr = dev->CreateRasterizerState1(&rastDes, CCWCull.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to create CCWCull\n\n");
 		return false;
 	}
 	rastDes.FrontCounterClockwise = false;
-	hr = dev->CreateRasterizerState(&rastDes, CCWCull.GetAddressOf());
+	hr = dev->CreateRasterizerState1(&rastDes, CCWCull.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to create CWCull\n\n");
 		return false;
 	}
 	rastDes.CullMode = D3D11_CULL_NONE;
-	hr = dev->CreateRasterizerState(&rastDes, NoCull.GetAddressOf());
+	hr = dev->CreateRasterizerState1(&rastDes, NoCull.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to create NoCull\n\n");
@@ -438,8 +443,15 @@ bool EngineClass::TCreatingBlending()
 	return true;
 }
 
-bool EngineClass::LoadFont()
-{
 
-	return true;
-}
+	bool EngineClass::LoadFont(HWND hwnd)
+	{
+		
+		return true;
+	}
+
+
+	void EngineClass::DrawMyText()
+	{
+	
+	}
