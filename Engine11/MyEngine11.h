@@ -21,7 +21,7 @@
 #define MULTISAMPLE_COUNT 1
 
 // D3D11_FILL_WIREFRAME | D3D11_FILL_SOLID
-#define RASTERIZER_FILL D3D11_FILL_WIREFRAME
+#define RASTERIZER_FILL D3D11_FILL_SOLID
 
 using namespace Microsoft;
 using namespace WRL;
@@ -77,6 +77,7 @@ private:
 	std::unique_ptr<SpriteFont>		spriteFont;
 
 	ComPtr<ID3D11ShaderResourceView> resourceTexture;
+	ComPtr<ID3D11ShaderResourceView> resource2Texture;
 	ComPtr<ID3D11SamplerState> texSamplerState;
 
 public:
@@ -88,7 +89,7 @@ private:
 	bool CreateDepthStencilView();
 	bool CreateDeviceAndSwapChain(HWND hwnd);
 	bool CreateRenderTargetView();
-	bool LoadingTexture();
+	bool LoadingTexture(const wchar_t* resourceAddress, ID3D11ShaderResourceView **resourceTexture);
 	bool TCreatingBlending();	//T ransparency
 	void DrawMyText(const char* text);
 	void StartTimer();
@@ -114,6 +115,7 @@ public:
 	//Object Matrix
 	XMMATRIX cube1World;
 	XMMATRIX cube2World;
+	XMMATRIX cube3World;
 	//Update Matrixes
 	XMMATRIX translation;
 	XMMATRIX rotation;

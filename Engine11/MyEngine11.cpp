@@ -1,7 +1,9 @@
 #include"MyEngine11.h"
 
+//シェーダーを読み込む関数
 bool LoadShader(LPCWSTR fileDirectory, LPCSTR startPoint, LPCSTR profile, ComPtr<ID3DBlob> *shaderBlob);
 
+//エンジンの初期化
 bool EngineClass::EngineInitialize(HWND hwnd)
 {
 	if (!CreateDeviceAndSwapChain(hwnd))
@@ -10,9 +12,6 @@ bool EngineClass::EngineInitialize(HWND hwnd)
 		return false;
 	if (!CreateDepthStencilView())
 		return false;
-
-
-	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
 
 	return true;
 }
@@ -63,7 +62,7 @@ bool EngineClass::PipelineInitialize()
 	}
 	devcon->IASetInputLayout(inputLayout.Get());
 
-	////Setting Constant Buffer/s
+	////コンスタントバッファ　作成
 	D3D11_BUFFER_DESC cbDes;
 	ZeroMemory(&cbDes, sizeof(D3D11_BUFFER_DESC));
 	cbDes.ByteWidth = sizeof(cbPerObjectBuffer);
@@ -74,10 +73,10 @@ bool EngineClass::PipelineInitialize()
 		OutputDebugStringA("\nFailed to Create Constant Buffer\n\n");
 		return false;
 	}
-	//Creating wireframe Rasterizer state
+	//針金　ラスタライザーステート　作成
 	D3D11_RASTERIZER_DESC1 rasDes;
 	ZeroMemory(&rasDes, sizeof(D3D11_RASTERIZER_DESC1));
-	rasDes.FillMode = RASTERIZER_FILL;
+	rasDes.FillMode = D3D11_FILL_WIREFRAME;
 	rasDes.CullMode = D3D11_CULL_NONE;
 	hr = dev->CreateRasterizerState1(&rasDes, wireframeState.GetAddressOf());
 	if (FAILED(hr))
@@ -94,6 +93,7 @@ bool EngineClass::PipelineInitialize()
 bool EngineClass::SceneGraphicsInitialize()
 {
 	HRESULT hr;
+	//頂点情報
 	Vertex myVertex[] =
 	{
 	            // Front Face
@@ -132,7 +132,7 @@ bool EngineClass::SceneGraphicsInitialize()
             { 1.0f,  1.0f,  1.0f, 1.0f, 0.0f},
             { 1.0f, -1.0f,  1.0f, 1.0f, 1.0f},
 	};
-
+	//頂点の順番
 	DWORD indices[]
 	{
 			// Front Face
@@ -160,44 +160,45 @@ bool EngineClass::SceneGraphicsInitialize()
             20, 22, 23
 	};
 
-	////Vertex Buffer-----------------
+	////頂点バッファ-----------------
 	D3D11_BUFFER_DESC vertexDes;
 	ZeroMemory(&vertexDes, sizeof(D3D11_BUFFER_DESC));
 	vertexDes.ByteWidth = sizeof(Vertex) * ARRAYSIZE(myVertex);
 	vertexDes.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	//Subresource
+	//サブリソース
 	D3D11_SUBRESOURCE_DATA vertexResource;
 	ZeroMemory(&vertexResource, sizeof(D3D11_SUBRESOURCE_DATA));
 	vertexResource.pSysMem = myVertex;
-	//Creation
+	//作成
 	hr = dev->CreateBuffer(&vertexDes, &vertexResource, vertexBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Create Vertex Buffer\n\n");
 		return false;
 	}
-	//Setting
+	//設定
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	devcon->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-	////Index Buffer-----------------
+	////頂点の順番バッファ
 	D3D11_BUFFER_DESC indexDes;
 	ZeroMemory(&indexDes, sizeof(D3D11_BUFFER_DESC));
 	indexDes.ByteWidth = sizeof(DWORD) * ARRAYSIZE(indices);
 	indexDes.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	//Subresource
+	//サブリソース
 	D3D11_SUBRESOURCE_DATA pixelResource;
 	ZeroMemory(&pixelResource, sizeof(D3D11_SUBRESOURCE_DATA));
 	pixelResource.pSysMem = indices;
-	//Creation
+	//作成
 	dev->CreateBuffer(&indexDes, &pixelResource, indexBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Create Index Buffer\n\n");
 		return false;
-	}//Setting
+	}
+	//設定
 	devcon->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-	////ViewPort-----------------------------
+	////ビューポート-----------------------------
 	ZeroMemory(&vp, sizeof(vp));
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
@@ -208,13 +209,17 @@ bool EngineClass::SceneGraphicsInitialize()
 	devcon->RSSetViewports(1, &vp);
 	//-------------------------------------
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
-	if (!LoadingTexture())
+	//テクスチャーの読み込み
+	//TODO　vectorを作って、簡単に読み込めるように
+	if (!LoadingTexture(L"../Resources/Sprite/Solid.dds", resourceTexture.GetAddressOf()))
+		return false;
+	if (!LoadingTexture(L"../Resources/Sprite/Glass.dds", resource2Texture.GetAddressOf()))
 		return false;
 	if (!TCreatingBlending())
 		return false;
-
+	//２Dレンダーの作成
 	spriteBatch = std::make_unique<SpriteBatch>(devcon.Get());
+	//フォントの作成
 	spriteFont = std::make_unique<SpriteFont>(dev.Get(), L"../Resources/Font/Sans32.spritefont");
 
 	return true;
@@ -273,12 +278,11 @@ bool EngineClass::CreateDeviceAndSwapChain(HWND hwnd)
 
 	return true;
 }
-
+//レンダーターゲットビューの作成
 bool EngineClass::CreateRenderTargetView()
 {
 	HRESULT hr;
 	ID3D11Texture2D* pBackBuffer;
-	//
 	hr = swapChain->GetBuffer(NULL, __uuidof(ID3D11Texture2D), (LPVOID*)(&pBackBuffer));
 	if (FAILED(hr))
 	{
@@ -294,12 +298,13 @@ bool EngineClass::CreateRenderTargetView()
 	pBackBuffer->Release();
 	return true;
 }
-
+//シェーダーの読み込み
 bool LoadShader(LPCWSTR fileDirectory, LPCSTR startPoint,LPCSTR profile, ComPtr<ID3DBlob> *shaderBlob)
 {
 	HRESULT hr;
 	ComPtr<ID3DBlob> outBlob = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
+	//DirectXTKからの関数
 	hr = D3DCompileFromFile(fileDirectory, NULL, NULL, startPoint, profile, NULL, NULL, outBlob.GetAddressOf(), errorBlob.GetAddressOf());
 	if (FAILED(hr))
 	{
@@ -309,10 +314,11 @@ bool LoadShader(LPCWSTR fileDirectory, LPCSTR startPoint,LPCSTR profile, ComPtr<
 	*shaderBlob = outBlob;
 	return true;
 }
-
+//深度の作成
 bool EngineClass::CreateDepthStencilView()
 {
 	HRESULT hr;
+	//深度の記述
 	D3D11_TEXTURE2D_DESC depthBufferDesc;
 	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthBufferDesc.Width = WINDOW_WIDTH;
@@ -325,7 +331,7 @@ bool EngineClass::CreateDepthStencilView()
 	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depthBufferDesc.CPUAccessFlags = 0;
 	depthBufferDesc.MiscFlags = 0;
-
+	//深度作成
 	hr = dev->CreateTexture2D(&depthBufferDesc, NULL, depthBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
@@ -341,7 +347,7 @@ bool EngineClass::CreateDepthStencilView()
 
 	return true;
 }
-
+//基準設定、各フレーム描画の前に設定します
 bool EngineClass::SettingWorld()
 {
 	devcon->VSSetShader(vertexShader.Get(), 0, 0);
@@ -375,11 +381,11 @@ bool EngineClass::SettingWorld()
 
 	return true;
 }
-
-bool EngineClass::LoadingTexture()
+//テクスチャーのロード
+bool EngineClass::LoadingTexture(const wchar_t* resourceAddress, ID3D11ShaderResourceView **resourceTexture)
 {
 	HRESULT hr;
-	hr = CreateDDSTextureFromFile(dev.Get(), L"../Resources/Sprite/Brain.dds", NULL, resourceTexture.GetAddressOf());
+	hr = CreateDDSTextureFromFile(dev.Get(), resourceAddress, NULL, resourceTexture);
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Load Texture\n\n");
@@ -404,7 +410,7 @@ bool EngineClass::LoadingTexture()
 
 	return true;
 }
-
+//「透明度」の作成
 bool EngineClass::TCreatingBlending()
 {
 	HRESULT hr;
@@ -412,6 +418,7 @@ bool EngineClass::TCreatingBlending()
 	ZeroMemory(&bds, sizeof(D3D11_BLEND_DESC1));
 	D3D11_RENDER_TARGET_BLEND_DESC1 rtbd;
 	ZeroMemory(&rtbd, sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
+	//ピクセルの計算仕方
 	rtbd.BlendEnable = true;
 	rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
 	rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
@@ -443,12 +450,13 @@ bool EngineClass::TCreatingBlending()
 		return false;
 	}
 	rastDes.FrontCounterClockwise = false;
-	hr = dev->CreateRasterizerState1(&rastDes, CCWCull.GetAddressOf());
+	hr = dev->CreateRasterizerState1(&rastDes, CWCull.GetAddressOf());
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to create CWCull\n\n");
 		return false;
 	}
+
 	rastDes.CullMode = D3D11_CULL_NONE;
 	hr = dev->CreateRasterizerState1(&rastDes, NoCull.GetAddressOf());
 	if (FAILED(hr))
@@ -460,13 +468,15 @@ bool EngineClass::TCreatingBlending()
 	return true;
 }
 
-
+//２Dレンダー DirectXTKのSpriteBatchを使っています。
 	void EngineClass::DrawMyText(const char* text)
 	{
 		FXMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		GXMVECTOR size = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 		spriteFont->DrawString(spriteBatch.get(), text, pos, Colors::White, 0, pos, size);
 	}
+	//-----------------------タイマー-------------------------
+	//タイマーの開始
 	void EngineClass::StartTimer()
 	{
 		LARGE_INTEGER frequencyCount;
@@ -475,12 +485,14 @@ bool EngineClass::TCreatingBlending()
 		QueryPerformanceCounter(&frequencyCount);
 		CounterStart = frequencyCount.QuadPart;
 	}
+	//タイマーの情報を収得する
 	double EngineClass::GetTime()
 	{
 		LARGE_INTEGER currentTime;
 		QueryPerformanceCounter(&currentTime);
 		return double(currentTime.QuadPart - CounterStart) / countsPerSecond;
 	}
+	//フレームレートを計算する
 	double EngineClass::GetFrameTime()
 	{
 		LARGE_INTEGER currentTime;
@@ -493,7 +505,7 @@ bool EngineClass::TCreatingBlending()
 			tickCount = 0.0f;
 		return float(tickCount) / countsPerSecond;
 	}
-
+	//上の三つ関数をまとめたタイマー
 	double EngineClass::Timer()
 	{
 		frameCount++;
