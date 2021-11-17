@@ -61,6 +61,6 @@ void EngineClass::Render()
 	spriteBatch->End();
 
 
-	swapChain->Present(0, 0);
+	swapChain->Present(1, 0);
 
 }

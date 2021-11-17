@@ -241,14 +241,14 @@ bool EngineClass::CreateDeviceAndSwapChain(HWND hwnd)
 	//スワップチェーン
 	DXGI_SWAP_CHAIN_DESC swapchainDesc;
 	ZeroMemory(&swapchainDesc, sizeof(DXGI_SWAP_CHAIN_DESC));
-	swapchainDesc.BufferCount = 1;
+	swapchainDesc.BufferCount = 3;
 	swapchainDesc.BufferDesc = backBuffer;
 	swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapchainDesc.OutputWindow = hwnd;
 	swapchainDesc.SampleDesc.Count = MULTISAMPLE_COUNT;
 	swapchainDesc.SampleDesc.Quality = 0;
 	swapchainDesc.Windowed = true;
-	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	hr = D3D11CreateDeviceAndSwapChain(0,
