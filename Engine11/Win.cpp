@@ -57,6 +57,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 		UnregisterClassW(CLASS_NAME, hInstance);
 		return -5;
 	}
+
+	//シーンの初期化
+	eg.InitializeScene();
 	//ウィンドウを示す
 	ShowWindow(hwnd, nCmdShow);
 	//メッセージループ
@@ -74,8 +77,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 			DestroyWindow(hwnd);
 			break;
 		}
-
-
+		//シーンの初期化
+		eg.SettingWorld();
 		//エンジン処理
 		eg.UpdateScene(eg.Timer());
 		//エンジ描画

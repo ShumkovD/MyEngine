@@ -53,6 +53,7 @@ bool EngineClass::PipelineInitialize()
 	{
 		{"POSITION" , 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"TEXCOORD" , 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"NORMAL" , 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	hr = dev->CreateInputLayout(ied, ARRAYSIZE(ied), vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), inputLayout.GetAddressOf());
 	if (FAILED(hr))
@@ -65,12 +66,22 @@ bool EngineClass::PipelineInitialize()
 	////コンスタントバッファ　作成
 	D3D11_BUFFER_DESC cbDes;
 	ZeroMemory(&cbDes, sizeof(D3D11_BUFFER_DESC));
+	//cbPerObjectBuffer
 	cbDes.ByteWidth = sizeof(cbPerObjectBuffer);
 	cbDes.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	hr = dev->CreateBuffer(&cbDes, NULL, constantBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
-		OutputDebugStringA("\nFailed to Create Constant Buffer\n\n");
+		OutputDebugStringA("\nFailed to Create perObject Constant Buffer\n\n");
+		return false;
+	}
+	//cbPerFrameBuffer
+	cbDes.ByteWidth = sizeof(cbPerFrameBuffer);
+	cbDes.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	hr = dev->CreateBuffer(&cbDes, NULL, constantPerFrameBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		OutputDebugStringA("\nFailed to Create perFrame Constant Buffer\n\n");
 		return false;
 	}
 	//針金　ラスタライザーステート　作成
@@ -96,41 +107,41 @@ bool EngineClass::SceneGraphicsInitialize()
 	//頂点情報
 	Vertex myVertex[] =
 	{
-	            // Front Face
-            {-1.0f, -1.0f, -1.0f, 0.0f, 1.0f},
-            {-1.0f,  1.0f, -1.0f, 0.0f, 0.0f},
-            { 1.0f,  1.0f, -1.0f, 1.0f, 0.0f},
-            { 1.0f, -1.0f, -1.0f, 1.0f, 1.0f},
-    
-            // Back Face
-            {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f},
-            { 1.0f, -1.0f, 1.0f, 0.0f, 1.0f},
-            { 1.0f,  1.0f, 1.0f, 0.0f, 0.0f},
-            {-1.0f,  1.0f, 1.0f, 1.0f, 0.0f},
-    
-            // Top Face
-            {-1.0f, 1.0f, -1.0f, 0.0f, 1.0f},
-            {-1.0f, 1.0f,  1.0f, 0.0f, 0.0f},
-            { 1.0f, 1.0f,  1.0f, 1.0f, 0.0f},
-            { 1.0f, 1.0f, -1.0f, 1.0f, 1.0f},
-    
-            // Bottom Face
-            {-1.0f, -1.0f, -1.0f, 1.0f, 1.0f},
-            { 1.0f, -1.0f, -1.0f, 0.0f, 1.0f},
-            { 1.0f, -1.0f,  1.0f, 0.0f, 0.0f},
-            {-1.0f, -1.0f,  1.0f, 1.0f, 0.0f},
-    
-            // Left Face
-            {-1.0f, -1.0f,  1.0f, 0.0f, 1.0f},
-            {-1.0f,  1.0f,  1.0f, 0.0f, 0.0f},
-            {-1.0f,  1.0f, -1.0f, 1.0f, 0.0f},
-            {-1.0f, -1.0f, -1.0f, 1.0f, 1.0f},
-    
-            // Right Face
-            { 1.0f, -1.0f, -1.0f, 0.0f, 1.0f},
-            { 1.0f,  1.0f, -1.0f, 0.0f, 0.0f},
-            { 1.0f,  1.0f,  1.0f, 1.0f, 0.0f},
-            { 1.0f, -1.0f,  1.0f, 1.0f, 1.0f},
+		// Front Face
+	   Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+	   Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+	   Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+	   Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+
+	   // Back Face
+	   Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
+	   Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
+	   Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
+	   Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
+
+	   // Top Face
+	   Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
+	   Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
+	   Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
+	   Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
+
+	   // Bottom Face
+	   Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+	   Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+	   Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
+	   Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
+
+	   // Left Face
+	   Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
+	   Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
+	   Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+	   Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+
+	   // Right Face
+	   Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+	   Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+	   Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
+	   Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
 	};
 	//頂点の順番
 	DWORD indices[]
@@ -368,12 +379,14 @@ bool EngineClass::SettingWorld()
 	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
+	cbPerObject.WVP = XMMatrixIdentity();
+	cbPerObject.world = XMMatrixIdentity();
+
 	world = XMMatrixIdentity();
 	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
 	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)WINDOW_WIDTH / WINDOW_HEIGHT, 1.0f, 1000.0f);
 
 	WVP = world * camView * camProjection;
-	cbPerObject.WVP = XMMatrixTranspose(WVP);
 
 	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
 	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());

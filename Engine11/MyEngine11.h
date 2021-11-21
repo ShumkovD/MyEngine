@@ -29,13 +29,43 @@ using namespace DirectX;
 
 struct Vertex
 {
-	float X, Y, Z, U, V;
-};
+	//コンストラクタ
+	Vertex(float x, float y, float z,
+		float u, float v,
+		float nx, float ny, float nz)
+		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
 
+	//頂点の位置
+	XMFLOAT3 pos;
+	//テクスチャー座標
+	XMFLOAT2 texCoord;
+	//ライトニングノルマル
+	XMFLOAT3 normal;
+};
+//オブジェクトごとのバッファ
 struct cbPerObjectBuffer
 {
 	XMMATRIX WVP;
+	XMMATRIX world;
 };
+
+//ライトニング構造体
+struct Light
+{
+	XMFLOAT3 dir;
+	float pad;
+	XMFLOAT4 ambient;
+	XMFLOAT4 diffuse;
+};
+
+//フレームごとのバッファ
+struct cbPerFrameBuffer
+{
+	Light light;
+};
+
+
+
 
 class EngineClass
 {
@@ -57,6 +87,7 @@ private:
 
 	ComPtr<ID3D11Buffer>	indexBuffer;
 	ComPtr<ID3D11Buffer>	vertexBuffer;
+	
 
 	ComPtr<ID3D11InputLayout> inputLayout;
 	
@@ -64,6 +95,7 @@ private:
 	ComPtr<ID3D11DepthStencilView>  depthStencil;
 
 	ComPtr<ID3D11Buffer>	constantBuffer;
+	ComPtr<ID3D11Buffer>	constantPerFrameBuffer;
 
 	ComPtr<ID3D11RasterizerState1> wireframeState;
 	
@@ -97,6 +129,7 @@ private:
 	double GetFrameTime();
 public:
 	double Timer();
+	void InitializeScene();
 	void UpdateScene(double time);
 	void Render();
 public:
@@ -109,9 +142,11 @@ public:
 	XMVECTOR camPos;
 	XMVECTOR camTarget;
 	XMVECTOR camUp;
-	//Constant buffer
-	cbPerObjectBuffer cbPerObject;
-
+	//ライトニングの初期化
+	Light light;
+	//コンスタントバッファ
+	cbPerObjectBuffer cbPerObject;	
+	cbPerFrameBuffer cbPerFrame;
 	//Object Matrix
 	XMMATRIX cube1World;
 	XMMATRIX cube2World;

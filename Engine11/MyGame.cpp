@@ -1,5 +1,14 @@
 #include"MyEngine11.h"
 
+void EngineClass::InitializeScene()
+{
+	//ライトニングの初期化
+	light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+
 void EngineClass::UpdateScene(double time)
 {
 
@@ -31,15 +40,17 @@ void EngineClass::UpdateScene(double time)
 
 void EngineClass::Render()
 {
-
+	//シーンリセット
 	SettingWorld();
-
-
-
-
+	//背景
 	float color[] = { 0.1f,0.1f,0.1f,1 };
+	//
 	float blendFactor[] = { 0.75f,0.75f,0.75f,1.0f };
 	devcon->ClearRenderTargetView(rtv.Get(), color);
+	//ライトニング
+	cbPerFrame.light = light;
+	devcon->UpdateSubresource1(constantPerFrameBuffer.Get(), 0, NULL, &cbPerFrame, 0, 0, 0);
+	devcon->PSSetConstantBuffers1(0, 1, constantPerFrameBuffer.GetAddressOf(), 0, 0);
 	//不透明
 	devcon->OMSetBlendState(0, 0, 0xffffffff);
 
@@ -51,9 +62,10 @@ void EngineClass::Render()
 
 		WVP = cube1World * camView * camProjection;
 		cbPerObject.WVP = XMMatrixTranspose(WVP);
+		cbPerObject.world = XMMatrixTranspose(cube1World);
 
-		devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
-		devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+		devcon->UpdateSubresource1(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0, 0);
+		devcon->VSSetConstantBuffers1(0, 1, constantBuffer.GetAddressOf(), 0, 0);
 		devcon->PSSetShaderResources(0, 1, resourceTexture.GetAddressOf());
 		devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 		devcon->DrawIndexed(36, 0, 0);
@@ -64,9 +76,10 @@ void EngineClass::Render()
 
 		WVP = cube2World * camView * camProjection;
 		cbPerObject.WVP = XMMatrixTranspose(WVP);
+		cbPerObject.world = XMMatrixTranspose(cube2World);
 
 		devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
-		devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+		devcon->VSSetConstantBuffers1(0, 1, constantBuffer.GetAddressOf(),0, 0);
 		devcon->PSSetShaderResources(0, 1, resource2Texture.GetAddressOf());
 		devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 		devcon->DrawIndexed(36, 0, 0);
@@ -77,6 +90,7 @@ void EngineClass::Render()
 
 		WVP = cube3World * camView * camProjection;
 		cbPerObject.WVP = XMMatrixTranspose(WVP);
+		cbPerObject.world = XMMatrixTranspose(cube3World);
 
 		devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
 		devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
