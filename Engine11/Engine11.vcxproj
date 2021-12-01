@@ -151,9 +151,11 @@
   <ItemGroup>
     <ClCompile Include="MyEngine11.cpp" />
     <ClCompile Include="MyGame.cpp" />
+    <ClCompile Include="DirectInput.cpp" />
     <ClCompile Include="Win.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DirectInput.h" />
     <ClInclude Include="MyEngine11.h" />
   </ItemGroup>
   <ItemGroup>

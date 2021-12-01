@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include"MyEngine11.h"
+#include"DirectInput.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -34,6 +35,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 
 	//エンジンの初期化
 	EngineClass eg;
+	DirectInput input;
 	if (!eg.EngineInitialize(hwnd))
 	{
 		UnregisterClassW(CLASS_NAME, hInstance);
@@ -57,6 +59,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 		UnregisterClassW(CLASS_NAME, hInstance);
 		return -5;
 	}
+	if (!input.DInputInitialize(hInstance, hwnd))
+	{
+		UnregisterClassW(CLASS_NAME, hInstance);
+		return -6;
+	}
+
 
 	//シーンの初期化
 	eg.InitializeScene();
@@ -64,6 +72,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 	ShowWindow(hwnd, nCmdShow);
 	//メッセージループ
 	MSG msg = { };
+	float time;
 	while (true)
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -77,14 +86,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 			DestroyWindow(hwnd);
 			break;
 		}
+		time = eg.Timer();
 		//シーンの初期化
 		eg.SettingWorld();
+		//入力の読み込み
+		input.DetectInput(time, hwnd);
 		//エンジン処理
-		eg.UpdateScene(eg.Timer());
+		eg.UpdateScene(time);
 		//エンジ描画
 		eg.Render();
 	}
-	
+	input.DInputRelease();
 	return 0;
 }
 

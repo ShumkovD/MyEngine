@@ -16,6 +16,8 @@
 #include <SpriteFont.h>
 #include <string>
 
+#include"DirectInput.h"
+
 #define WINDOW_HEIGHT 1024
 #define WINDOW_WIDTH 1920
 #define MULTISAMPLE_COUNT 1
@@ -112,6 +114,8 @@ private:
 	ComPtr<ID3D11ShaderResourceView> resource2Texture;
 	ComPtr<ID3D11SamplerState> texSamplerState;
 
+	DirectInput input;
+
 public:
 	bool EngineInitialize(HWND hwnd);
 	bool PipelineInitialize();
@@ -132,6 +136,7 @@ public:
 	void InitializeScene();
 	void UpdateScene(double time);
 	void Render();
+
 public:
 	//çsóÒ
 	XMMATRIX WVP;
@@ -153,7 +158,7 @@ public:
 	XMMATRIX cube3World;
 	//Update Matrixes
 	XMMATRIX translation;
-	XMMATRIX rotation;
+	
 	XMMATRIX scaling;
 	float rot = 0.005f;
 

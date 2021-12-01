@@ -8,6 +8,46 @@ void EngineClass::InitializeScene()
 	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+	float rotz = 1.0f;
+	float rotx = 1.0f;
+	float scaleX = 1.0f;
+	float scaleY = 1.0f;
+
+void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *keyboardState, double time)
+{
+	if (keyboardState[DIK_ESCAPE] & 0x80)
+		PostMessage(hwnd, WM_DESTROY, 0, 0);
+
+	if (keyboardState[DIK_LEFT] & 0x80)
+	{
+		rotz -= 1.0f * time;
+	}
+	if (keyboardState[DIK_RIGHT] & 0x80)
+	{
+		rotz += 1.0f * time;
+	}
+	if (keyboardState[DIK_UP] & 0x80)
+	{
+		rotx += 1.0f * time;
+	}
+	if (keyboardState[DIK_DOWN] & 0x80)
+	{
+		rotx -= 1.0f * time;
+	}
+	if (currentMouseState.lX != mouseLastState.lX)
+	{
+		scaleX -= (currentMouseState.lX * 0.001f);
+	}
+	if (currentMouseState.lY != mouseLastState.lY)
+	{
+		scaleY -= (currentMouseState.lY * 0.001f);
+	}
+
+	mouseLastState = currentMouseState;
+	return;
+
+}
+
 
 void EngineClass::UpdateScene(double time)
 {
@@ -20,12 +60,14 @@ void EngineClass::UpdateScene(double time)
 	//中心にある立方体	ピクサークリッピングに設定しています。
 	cube1World = XMMatrixIdentity();
 	translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
-	rotation = XMMatrixRotationAxis(rotaxis, rot);
-	cube1World = translation * rotation;
+	XMMATRIX rotationx, rotationz, rotation;
+	rotationx = XMMatrixRotationAxis(rotaxis, rotx);
+	rotationz = XMMatrixRotationAxis(rotaxis, rotz);
+	cube1World = translation * rotationx * rotationz;
 	//Y軸を回転している	透明に設定しています。
 	cube2World = XMMatrixIdentity();
 	rotation = XMMatrixRotationAxis(rotaxis, -rot);
-	scaling = XMMatrixScaling(1.3f, 1.3f, 1.3f);
+	scaling = XMMatrixScaling(scaleX, scaleY, 1.3f);
 	cube2World = scaling * rotation;
 
 	rotaxis = XMVectorSet(1.0f, 0.0f, 0.0f, 1.0f);
