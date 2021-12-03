@@ -149,6 +149,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DMesh.cpp" />
     <ClCompile Include="MyEngine11.cpp" />
     <ClCompile Include="MyGame.cpp" />
     <ClCompile Include="DirectInput.cpp" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectInput.h" />
+    <ClInclude Include="DMesh.h" />
     <ClInclude Include="MyEngine11.h" />
   </ItemGroup>
   <ItemGroup>

@@ -49,6 +49,8 @@ struct cbPerObjectBuffer
 {
 	XMMATRIX WVP;
 	XMMATRIX world;
+	XMFLOAT4 difColor;
+	bool	 hasTexture;
 };
 
 //ライトニング構造体
