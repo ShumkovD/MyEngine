@@ -12,6 +12,9 @@ bool EngineClass::EngineInitialize(HWND hwnd)
 		return false;
 	if (!CreateDepthStencilView())
 		return false;
+	//WICの初期化
+	if (FAILED(CoInitialize(NULL)))
+		return false;
 
 	return true;
 }
@@ -103,112 +106,6 @@ bool EngineClass::PipelineInitialize()
 
 bool EngineClass::SceneGraphicsInitialize()
 {
-	HRESULT hr;
-	//頂点情報
-	Vertex myVertex[] =
-	{
-		// Front Face
-	   Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-	   Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-	   Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-	   Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-
-	   // Back Face
-	   Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
-	   Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
-	   Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
-	   Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
-
-	   // Top Face
-	   Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
-	   Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
-	   Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
-	   Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
-
-	   // Bottom Face
-	   Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-	   Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-	   Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
-	   Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
-
-	   // Left Face
-	   Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
-	   Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
-	   Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-	   Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-
-	   // Right Face
-	   Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-	   Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-	   Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
-	   Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
-	};
-	//頂点の順番
-	DWORD indices[]
-	{
-			// Front Face
-            0,  1,  2,
-            0,  2,  3,
-    
-            // Back Face
-            4,  5,  6,
-            4,  6,  7,
-    
-            // Top Face
-            8,  9, 10,
-            8, 10, 11,
-    
-            // Bottom Face
-            12, 13, 14,
-            12, 14, 15,
-    
-            // Left Face
-            16, 17, 18,
-            16, 18, 19,
-    
-            // Right Face
-            20, 21, 22,
-            20, 22, 23
-	};
-
-	////頂点バッファ-----------------
-	D3D11_BUFFER_DESC vertexDes;
-	ZeroMemory(&vertexDes, sizeof(D3D11_BUFFER_DESC));
-	vertexDes.ByteWidth = sizeof(Vertex) * ARRAYSIZE(myVertex);
-	vertexDes.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	//サブリソース
-	D3D11_SUBRESOURCE_DATA vertexResource;
-	ZeroMemory(&vertexResource, sizeof(D3D11_SUBRESOURCE_DATA));
-	vertexResource.pSysMem = myVertex;
-	//作成
-	hr = dev->CreateBuffer(&vertexDes, &vertexResource, vertexBuffer.GetAddressOf());
-	if (FAILED(hr))
-	{
-		OutputDebugStringA("\nFailed to Create Vertex Buffer\n\n");
-		return false;
-	}
-	//設定
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	devcon->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-	////頂点の順番バッファ
-	D3D11_BUFFER_DESC indexDes;
-	ZeroMemory(&indexDes, sizeof(D3D11_BUFFER_DESC));
-	indexDes.ByteWidth = sizeof(DWORD) * ARRAYSIZE(indices);
-	indexDes.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	//サブリソース
-	D3D11_SUBRESOURCE_DATA pixelResource;
-	ZeroMemory(&pixelResource, sizeof(D3D11_SUBRESOURCE_DATA));
-	pixelResource.pSysMem = indices;
-	//作成
-	dev->CreateBuffer(&indexDes, &pixelResource, indexBuffer.GetAddressOf());
-	if (FAILED(hr))
-	{
-		OutputDebugStringA("\nFailed to Create Index Buffer\n\n");
-		return false;
-	}
-	//設定
-	devcon->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	////ビューポート-----------------------------
 	ZeroMemory(&vp, sizeof(vp));
 	vp.TopLeftX = 0;
@@ -222,11 +119,9 @@ bool EngineClass::SceneGraphicsInitialize()
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//テクスチャーの読み込み
 	//TODO　vectorを作って、簡単に読み込めるように
-	if (!LoadingTexture(L"../Resources/Sprite/Solid.dds", resourceTexture.GetAddressOf()))
-		return false;
-	if (!LoadingTexture(L"../Resources/Sprite/Glass.dds", resource2Texture.GetAddressOf()))
-		return false;
 	if (!TCreatingBlending())
+		return false;
+	if (!CreateSampler())
 		return false;
 	//２Dレンダーの作成
 	spriteBatch = std::make_unique<SpriteBatch>(devcon.Get());
@@ -365,11 +260,8 @@ bool EngineClass::SettingWorld()
 	devcon->PSSetShader(pixelShader.Get(), 0, 0);
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	devcon->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-	devcon->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	devcon->IASetInputLayout(inputLayout.Get());
 	devcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	devcon->RSSetState(NULL);
 	devcon->OMSetDepthStencilState(NULL, 0);
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
@@ -388,8 +280,6 @@ bool EngineClass::SettingWorld()
 
 	WVP = world * camView * camProjection;
 
-	devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
-	devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
 
 	return true;
@@ -404,10 +294,14 @@ bool EngineClass::LoadingTexture(const wchar_t* resourceAddress, ID3D11ShaderRes
 		OutputDebugStringA("\nFailed to Load Texture\n\n");
 		return false;
 	}
-
+}
+bool EngineClass::CreateSampler()
+{
+	HRESULT hr;
 	D3D11_SAMPLER_DESC samplerDesc;
 	ZeroMemory(&samplerDesc, sizeof(D3D11_SAMPLER_DESC));
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;

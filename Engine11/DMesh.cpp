@@ -2,12 +2,6 @@
 
 //オブジェクトをファイルからの読み込み
 bool DMesh::LoadObjModel(std::wstring filename,
-	ComPtr<ID3D11Buffer>& vertBuff,
-	ComPtr<ID3D11Buffer>& indexBuff,
-	std::vector<int>& subsetIndexStart,
-	std::vector<int>& subsetMaterialArray,
-	std::vector<SurfaceMaterial>& material,
-	int& subsetCount,
 	bool isRHCoordSys,
 	bool computeNormals,
 	ComPtr<ID3D11Device1> dev)
@@ -45,7 +39,7 @@ bool DMesh::LoadObjModel(std::wstring filename,
 
 	if (fileIn)
 	{
-		while (fileIn)
+		while (!fileIn.eof())
 		{
 			checkChar = fileIn.get();
 			switch (checkChar)
@@ -91,8 +85,16 @@ bool DMesh::LoadObjModel(std::wstring filename,
 				checkChar = fileIn.get();
 				if (checkChar == ' ')
 				{
-					subsetIndexStart.push_back(vIndex);
-					subsetCount++;
+					meshSubsetIndexStart.push_back(vIndex);
+					meshSubsets++;
+				}
+				break;
+			case 'o':
+				checkChar = fileIn.get();
+				if (checkChar == ' ')
+				{
+					meshSubsetIndexStart.push_back(vIndex);
+					meshSubsets++;
 				}
 				break;
 				//フェースインデクス
@@ -168,10 +170,10 @@ bool DMesh::LoadObjModel(std::wstring filename,
 								}
 							}
 							//読み込んだ情報を保存する
-							if (subsetCount == 0)
+							if (meshSubsets == 0)
 							{
-								subsetIndexStart.push_back(vIndex);
-								subsetCount++;
+								meshSubsetIndexStart.push_back(vIndex);
+								meshSubsets++;
 							}
 							bool vertAlreadyExists = false;
 							if (totalVerts >= 3)
@@ -301,10 +303,20 @@ bool DMesh::LoadObjModel(std::wstring filename,
 								checkChar = fileIn.get();
 								if (checkChar == 'b')
 								{
-									checkChar = fileIn.get();
-									if (checkChar == ' ')
+									std::wstring fileNamePath;
+									fileIn.get();
+									bool textFilePathEnd = false;
+									while (!textFilePathEnd)
 									{
-										fileIn >> meshMatLib;
+										checkChar = fileIn.get();
+										fileNamePath += checkChar;
+										if (checkChar == '.')
+										{
+											for (int i = 0; i < 3; i++)
+												fileNamePath += fileIn.get();
+											textFilePathEnd = true;
+										}
+										meshMatLib = fileNamePath;
 									}
 								}
 							}
@@ -314,6 +326,7 @@ bool DMesh::LoadObjModel(std::wstring filename,
 				break;
 				//グループマテリアルの読み込み
 			case 'u':
+				checkChar = fileIn.get();
 				if (checkChar == 's')
 				{
 					checkChar = fileIn.get();
@@ -358,10 +371,10 @@ bool DMesh::LoadObjModel(std::wstring filename,
 		return false;
 	}
 
-	subsetIndexStart.push_back(vIndex);
-	if (subsetIndexStart[1] == 0)
+	meshSubsetIndexStart.push_back(vIndex);
+	if (meshSubsetIndexStart[1] == 0)
 	{
-		subsetIndexStart.erase(subsetIndexStart.begin() + 1);
+		meshSubsetIndexStart.erase(meshSubsetIndexStart.begin() + 1);
 		meshSubsets--;
 	}
 	if (!hasTexCoord)
@@ -369,173 +382,179 @@ bool DMesh::LoadObjModel(std::wstring filename,
 	if (!hasNorm)
 		vertNorm.push_back(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	fileIn.close();
-	fileIn.open(meshMatLib.c_str());
+	meshMatLib = L"../Resources/Model/" + meshMatLib;
+	fileIn.open(meshMatLib);
 	std::wstring lastStringRead;
 	unsigned int matCount = material.size();
 	bool kdset = false;
 	if (fileIn)
 	{
-		checkChar = fileIn.get();
-		switch (checkChar)
+		while (fileIn)
 		{
-		case '#':
 			checkChar = fileIn.get();
-			while (checkChar != '\n')
-				checkChar = fileIn.get();
-			break;
-		case'K':
-			checkChar = fileIn.get();
-			if (checkChar == 'd')
+			switch (checkChar)
 			{
+			case '#':
 				checkChar = fileIn.get();
-				fileIn >> material[matCount - 1].difColor.x;
-				fileIn >> material[matCount - 1].difColor.y;
-				fileIn >> material[matCount - 1].difColor.z;
-				kdset = true;
-			}
-			if (checkChar == 'a')
-			{
+				while (checkChar != '\n')
+					checkChar = fileIn.get();
+				break;
+			case'K':
 				checkChar = fileIn.get();
-				if (!kdset)
+				if (checkChar == 'd')
 				{
+					checkChar = fileIn.get();
 					fileIn >> material[matCount - 1].difColor.x;
 					fileIn >> material[matCount - 1].difColor.y;
 					fileIn >> material[matCount - 1].difColor.z;
+					kdset = true;
 				}
-			}
-			break;
-			//透明度
-		case 'T':
-			checkChar = fileIn.get();
-			if (checkChar == 'r')
-			{
-				checkChar = fileIn.get();
-				float Transparency;
-				fileIn >> Transparency;
-				material[matCount - 1].difColor.w = Transparency;
-				if (Transparency > 0.0f)
-					material[matCount - 1].transparent = true;
-			}
-			break;
-			//透明度はたまにファイルで’ｄ’を使っています
-		case 'd':
-			checkChar = fileIn.get();
-			if (checkChar == '　')
-			{
-				float Transparency;
-				fileIn >> Transparency;
-
-				Transparency = 1.0f - Transparency;
-				material[matCount - 1].difColor.w = Transparency;
-				if (Transparency > 0.0f)
-					material[matCount - 1].transparent = true;
-			}
-			break;
-		case'm':
-			checkChar = fileIn.get();
-			if (checkChar == 'a')
-			{
-				checkChar = fileIn.get();
-				if (checkChar == 'p')
+				if (checkChar == 'a')
 				{
 					checkChar = fileIn.get();
-					if (checkChar == '_')
+					if (!kdset)
 					{
-						checkChar = fileIn.get();
-
-						if (checkChar == 'K')
-						{
-							checkChar = fileIn.get();
-							if (checkChar == 'd')
-							{
-								std::wstring fileNamePath;
-								fileIn.get();
-								bool textFilePathEnd = false;
-								while (!textFilePathEnd)
-								{
-									checkChar = fileIn.get();
-									fileNamePath += checkChar;
-									if (checkChar == '.')
-									{
-										for (int i = 0; i < 3; i++)
-											fileNamePath += fileIn.get();
-										textFilePathEnd = true;
-									}
-								}
-								bool alreadyLoaded = false;
-								for (int i = 0; i < textureNameArray.size(); i++)
-								{
-									if (fileNamePath == textureNameArray[i])
-									{
-										alreadyLoaded = true;
-										material[matCount - 1].texArrayIndex = i;
-										material[matCount - 1].hasTexture = true;
-									}
-								}
-								if (!alreadyLoaded)
-								{
-									ComPtr<ID3D11ShaderResourceView> tempMeshRSV;
-									hr = CreateDDSTextureFromFile(dev.Get(), fileNamePath.c_str(), NULL, &tempMeshRSV, NULL, NULL);
-									if (SUCCEEDED(hr))
-									{
-										textureNameArray.push_back(fileNamePath.c_str());
-										material[matCount - 1].texArrayIndex = meshSRV.size();
-										meshSRV.push_back(tempMeshRSV);
-										material[matCount - 1].hasTexture = true;
-									}
-								}
-							}
-						}
-						else if (checkChar == 'd')
-						{
-							material[matCount - 1].transparent = true;
-						}
+						fileIn >> material[matCount - 1].difColor.x;
+						fileIn >> material[matCount - 1].difColor.y;
+						fileIn >> material[matCount - 1].difColor.z;
 					}
 				}
-			}
-			break;
-		case 'n':
-			checkChar = fileIn.get();
-			if (checkChar == 'e')
-			{
+				break;
+				//透明度
+			case 'T':
 				checkChar = fileIn.get();
-				if (checkChar == 'w')
+				if (checkChar == 'r')
 				{
 					checkChar = fileIn.get();
-					if (checkChar == 'm')
+					float Transparency;
+					fileIn >> Transparency;
+					material[matCount - 1].difColor.w = Transparency;
+					if (Transparency > 0.0f)
+						material[matCount - 1].transparent = true;
+				}
+				break;
+				//透明度はたまにファイルで’ｄ’を使っています
+			case 'd':
+				checkChar = fileIn.get();
+				if (checkChar == '　')
+				{
+					float Transparency;
+					fileIn >> Transparency;
+
+					Transparency = 1.0f - Transparency;
+					material[matCount - 1].difColor.w = Transparency;
+					if (Transparency > 0.0f)
+						material[matCount - 1].transparent = true;
+				}
+				break;
+			case'm':
+				checkChar = fileIn.get();
+				if (checkChar == 'a')
+				{
+					checkChar = fileIn.get();
+					if (checkChar == 'p')
 					{
 						checkChar = fileIn.get();
-						if (checkChar == 't')
+						if (checkChar == '_')
 						{
 							checkChar = fileIn.get();
-							if (checkChar == 'l')
+
+							if (checkChar == 'K')
 							{
 								checkChar = fileIn.get();
-								if (checkChar == ' ')
+								if (checkChar == 'd')
 								{
-									SurfaceMaterial tempMat;
-									material.push_back(tempMat);
-									fileIn >> material[matCount].matName;
-									material[matCount].transparent = false;
-									material[matCount].hasTexture = false;
-									material[matCount].texArrayIndex = 0;
-									matCount++;
-									kdset = false;
+									std::wstring fileNamePath;
+									fileIn.get();
+									bool textFilePathEnd = false;
+									while (!textFilePathEnd)
+									{
+										checkChar = fileIn.get();
+										fileNamePath += checkChar;
+										if (checkChar == '.')
+										{
+											for (int i = 0; i < 3; i++)
+												fileNamePath += fileIn.get();
+											fileNamePath = L"../Resources/Model/" + fileNamePath;
+											textFilePathEnd = true;
+										}
+									}
+									bool alreadyLoaded = false;
+									for (int i = 0; i < textureNameArray.size(); i++)
+									{
+										if (fileNamePath == textureNameArray[i])
+										{
+											alreadyLoaded = true;
+											material[matCount - 1].texArrayIndex = i;
+											material[matCount - 1].hasTexture = true;
+										}
+									}
+									if (!alreadyLoaded)
+									{
+										ComPtr<ID3D11ShaderResourceView> tempMeshRSV;
+										ComPtr<ID3D11Resource> Res;
+										hr = CreateWICTextureFromFile(dev.Get(), fileNamePath.c_str(), Res.GetAddressOf(), tempMeshRSV.GetAddressOf(), NULL);
+											
+										if (SUCCEEDED(hr))
+										{
+											textureNameArray.push_back(fileNamePath.c_str());
+											material[matCount - 1].texArrayIndex = meshSRV.size();
+											meshSRV.push_back(tempMeshRSV);
+											material[matCount - 1].hasTexture = true;
+										}
+									}
+								}
+							}
+							else if (checkChar == 'd')
+							{
+								material[matCount - 1].transparent = true;
+							}
+						}
+					}
+				}
+				break;
+			case 'n':
+				checkChar = fileIn.get();
+				if (checkChar == 'e')
+				{
+					checkChar = fileIn.get();
+					if (checkChar == 'w')
+					{
+						checkChar = fileIn.get();
+						if (checkChar == 'm')
+						{
+							checkChar = fileIn.get();
+							if (checkChar == 't')
+							{
+								checkChar = fileIn.get();
+								if (checkChar == 'l')
+								{
+									checkChar = fileIn.get();
+									if (checkChar == ' ')
+									{
+										SurfaceMaterial tempMat;
+										material.push_back(tempMat);
+										fileIn >> material[matCount].matName;
+										material[matCount].transparent = false;
+										material[matCount].hasTexture = false;
+										material[matCount].texArrayIndex = 0;
+										matCount++;
+										kdset = false;
+									}
 								}
 							}
 						}
 					}
 				}
+				break;
+			default:
+				break;
 			}
-			break;
-		default:
-			break;
 		}
-		
 	}
 	else
 	{
-		std::wstring message = L"Could not open: ";
+		std::wstring message = L"Could not open Mat: ";
 		message += meshMatLib;
 		MessageBox(0, message.c_str(),
 			L"Error", MB_OK);
@@ -550,12 +569,12 @@ bool DMesh::LoadObjModel(std::wstring filename,
 		{
 			if (meshMaterials[i] == material[j].matName)
 			{
-				subsetMaterialArray.push_back(j);
+				meshSubsetTexture.push_back(j);
 				hasMat = true;
 			}
 		}
 		if (!hasMat)
-			subsetMaterialArray.push_back(0);
+			meshSubsetTexture.push_back(0);
 	}
 	std::vector<Vertex> vertices;
 	Vertex tempVert;
@@ -589,7 +608,54 @@ bool DMesh::LoadObjModel(std::wstring filename,
 			XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
 			tempNormal.push_back(unnormalized); 
 		}
-		//TODO
+		XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		int facesUsing = 0;
+		float tX, tY, tZ;
+		for (int i = 0; i < totalVerts; i++)
+		{
+			for (long long int j = 0; j < meshTriangles; j++)
+			{
+				if (indices[j * 3] == i || indices[(j * 3) + 1] == i || indices[(j * 3) + 2] == i)
+				{
+					tX = XMVectorGetX(normalSum) + tempNormal[j].x;
+					tY = XMVectorGetX(normalSum) + tempNormal[j].y;
+					tZ = XMVectorGetX(normalSum) + tempNormal[j].z;
+					normalSum = XMVectorSet(tX, tY, tZ, 0);
+					facesUsing++;
+				}
+				normalSum = normalSum / facesUsing;
+				normalSum = XMVector3Normalize(normalSum);
+				vertices[i].normal.x = XMVectorGetX(normalSum);
+				vertices[i].normal.y = XMVectorGetY(normalSum);
+				vertices[i].normal.z = XMVectorGetZ(normalSum);
+				XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+				int facesUsing = 0;
+			}
+		}
 	}
+	D3D11_BUFFER_DESC indexBufferDesc;
+	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexBufferDesc.ByteWidth = sizeof(DWORD) * meshTriangles * 3;
+	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexBufferDesc.CPUAccessFlags = 0;
+	indexBufferDesc.MiscFlags = 0;
 
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &indices[0];
+	dev->CreateBuffer(&indexBufferDesc, &iinitData, meshIndexBuffer.GetAddressOf());
+
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex) * totalVerts;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertexBufferData;
+	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+	vertexBufferData.pSysMem = &vertices[0];
+	dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, meshVertexBuffer.GetAddressOf());
+	return true;
 }

@@ -17,6 +17,7 @@
 #include <string>
 
 #include"DirectInput.h"
+#include"DMesh.h"
 
 #define WINDOW_HEIGHT 1024
 #define WINDOW_WIDTH 1920
@@ -29,21 +30,6 @@ using namespace Microsoft;
 using namespace WRL;
 using namespace DirectX;
 
-struct Vertex
-{
-	//コンストラクタ
-	Vertex(float x, float y, float z,
-		float u, float v,
-		float nx, float ny, float nz)
-		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
-
-	//頂点の位置
-	XMFLOAT3 pos;
-	//テクスチャー座標
-	XMFLOAT2 texCoord;
-	//ライトニングノルマル
-	XMFLOAT3 normal;
-};
 //オブジェクトごとのバッファ
 struct cbPerObjectBuffer
 {
@@ -112,8 +98,6 @@ private:
 	std::unique_ptr<SpriteBatch>	spriteBatch;
 	std::unique_ptr<SpriteFont>		spriteFont;
 
-	ComPtr<ID3D11ShaderResourceView> resourceTexture;
-	ComPtr<ID3D11ShaderResourceView> resource2Texture;
 	ComPtr<ID3D11SamplerState> texSamplerState;
 
 	DirectInput input;
@@ -124,6 +108,7 @@ public:
 	bool SceneGraphicsInitialize();
 	bool SettingWorld();
 private:
+	bool CreateSampler();
 	bool CreateDepthStencilView();
 	bool CreateDeviceAndSwapChain(HWND hwnd);
 	bool CreateRenderTargetView();

@@ -7,9 +7,14 @@
 #include<sstream>
 
 #include<DirectXMath.h>
-#include<DDSTextureLoader.h>
+#include<WICTextureLoader.h>
 #include<Windows.h>
 #include<wrl/client.h>
+
+#ifdef _DEBUG
+#include "ScreenGrab.h"
+#include <wincodec.h>
+#endif
 
 using namespace Microsoft;
 using namespace WRL;
@@ -43,11 +48,13 @@ struct Vertex
 
 class DMesh
 {
-private:
+public:
 	ComPtr<ID3D11BlendState> transparency;
 	ComPtr<ID3D11Buffer>	meshVertexBuffer;
 	ComPtr<ID3D11Buffer>	meshIndexBuffer;
-	XMMATRIX meshWorld;
+	XMMATRIX meshWorld = XMMatrixIdentity();
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 	int meshSubsets = 0;
 	std::vector<int> meshSubsetIndexStart;
 	std::vector<int> meshSubsetTexture;
@@ -56,13 +63,7 @@ private:
 	std::vector<SurfaceMaterial> material;
 public:
 	bool LoadObjModel(std::wstring flename,
-		ComPtr<ID3D11Buffer> &vertBuff,
-		ComPtr<ID3D11Buffer>& indexBuff, 
-		std::vector<int>& subsetIndexStart,
-		std::vector<int>& subsetMaterialArray,
-		std::vector<SurfaceMaterial>& material,
-		int& subsetCount,
-		bool isRHCoordSys,
+		bool isRHCoordSys, 
 		bool computeNormals,
 		ComPtr<ID3D11Device1> dev);
 };
