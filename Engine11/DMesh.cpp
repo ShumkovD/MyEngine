@@ -89,14 +89,6 @@ bool DMesh::LoadObjModel(std::wstring filename,
 					meshSubsets++;
 				}
 				break;
-			case 'o':
-				checkChar = fileIn.get();
-				if (checkChar == ' ')
-				{
-					meshSubsetIndexStart.push_back(vIndex);
-					meshSubsets++;
-				}
-				break;
 				//フェースインデクス
 			case 'f':
 				checkChar = fileIn.get();
@@ -347,6 +339,8 @@ bool DMesh::LoadObjModel(std::wstring filename,
 										meshMaterialsTemp = L"";
 										fileIn >> meshMaterialsTemp;
 										meshMaterials.push_back(meshMaterialsTemp);
+										meshSubsets++;
+										meshSubsetIndexStart.push_back(vIndex);
 									}
 								}
 							}

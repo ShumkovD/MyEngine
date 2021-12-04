@@ -266,17 +266,11 @@ bool EngineClass::SettingWorld()
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	devcon->RSSetViewports(1, &vp);
-	//Setting Default World Setting
-	camPos = XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
-	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	cbPerObject.WVP = XMMatrixIdentity();
 	cbPerObject.world = XMMatrixIdentity();
 
 	world = XMMatrixIdentity();
-	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
-	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)WINDOW_WIDTH / WINDOW_HEIGHT, 1.0f, 1000.0f);
 
 	WVP = world * camView * camProjection;
 

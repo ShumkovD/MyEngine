@@ -4,25 +4,36 @@ DMesh obj1;
 
 void EngineClass::InitializeScene()
 {
-	if (!obj1.LoadObjModel(L"../Resources/model/tree.obj", true, false, dev))
+	if (!obj1.LoadObjModel(L"../Resources/model/plant.obj", true, false, dev))
 		return;
 
+	//カメラ
+	camPos = XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
+	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
+	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)WINDOW_WIDTH / WINDOW_HEIGHT, 1.0f, 1000.0f);
 	//ライトニングの初期化
 	light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	light.ambient = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-float scale = 0.001f;
+float scale = 5.0f;
+float camPosIncrement = 1.0f;
 
 void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *keyboardState, double time)
 {
 	if (keyboardState[DIK_ESCAPE] & 0x80)
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
-	if (keyboardState[DIK_UP] & 0x80)
+	if (keyboardState[DIK_RIGHT] & 0x80)
 		scale += 0.4f*time;
-	if (keyboardState[DIK_DOWN] & 0x80)
+	if (keyboardState[DIK_LEFT] & 0x80)
 		scale -= 0.4f*time;
+	if (keyboardState[DIK_UP] & 0x80)
+		camPosIncrement += camPosIncrement * time;
+	if (keyboardState[DIK_DOWN] & 0x80)
+		camPosIncrement -= camPosIncrement * time;
 
 	if (scale < 0.01f)
 		scale = 0.01f;
@@ -33,6 +44,8 @@ void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *ke
 
 void EngineClass::UpdateScene(double time)
 {
+	camPos = XMVectorSet(0.0f, 3.0f, -8.0f + camPosIncrement, 0.0f);
+	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
 	obj1.meshWorld = XMMatrixIdentity();
 	XMMATRIX Scale = XMMatrixScaling(scale, scale, scale);
 	XMMATRIX Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
@@ -90,9 +103,9 @@ void EngineClass::Render()
 
 
 	//2Dレンダー
-	/*spriteBatch->Begin();
+	spriteBatch->Begin();
 	DrawMyText(std::to_string(fps).c_str());
-	spriteBatch->End();*/
+	spriteBatch->End();
 
 
 	swapChain->Present(1, 0);
