@@ -81,15 +81,15 @@ bool DMesh::LoadObjModel(std::wstring filename,
 					hasNorm = true;
 				}
 				break;
-			case 'g':
-				checkChar = fileIn.get();
-				if (checkChar == ' ')
-				{
-					meshSubsetIndexStart.push_back(vIndex);
-					meshSubsets++;
-				}
-				break;
-				//フェースインデクス
+			//case 'g':
+			//	checkChar = fileIn.get();
+			//	if (checkChar == ' ')
+			//	{
+			//		meshSubsetIndexStart.push_back(vIndex);
+			//		meshSubsets++;
+			//	}
+			//	break;
+			//	//フェースインデクス
 			case 'f':
 				checkChar = fileIn.get();
 				if (checkChar == ' ')
@@ -342,6 +342,8 @@ bool DMesh::LoadObjModel(std::wstring filename,
 										meshSubsets++;
 										meshSubsetIndexStart.push_back(vIndex);
 									}
+
+
 								}
 							}
 						}
@@ -496,6 +498,13 @@ bool DMesh::LoadObjModel(std::wstring filename,
 											meshSRV.push_back(tempMeshRSV);
 											material[matCount - 1].hasTexture = true;
 										}
+#ifdef _DEBUG
+										else
+										{
+											OutputDebugStringA("\n\n\tCouldn't load texture at ");
+											OutputDebugStringW(fileNamePath.c_str());
+										}
+#endif // _DEBUG
 									}
 								}
 							}

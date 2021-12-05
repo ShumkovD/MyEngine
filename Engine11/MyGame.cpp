@@ -63,7 +63,7 @@ void EngineClass::Render()
 	devcon->PSSetShader(pixelShader.Get(), 0, 0);
 	float color[] = { 0.1f,0.1f,0.1f,1.0f };
 	//
-	float blendFactor[] = { 0.75f,0.75f,0.75f,1.0f };
+	float blendFactor[] = { 0.9f,0.9f,0.9f,1.0f };
 	devcon->OMSetRenderTargets(1, rtv.GetAddressOf(), depthStencil.Get());
 	devcon->ClearRenderTargetView(rtv.Get(), color);
 	devcon->ClearDepthStencilView(depthStencil.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -97,10 +97,38 @@ void EngineClass::Render()
 		devcon->RSSetState(NoCull.Get());
 		int indexStart = obj1.meshSubsetIndexStart[i];
 		int indexDrawAmount = obj1.meshSubsetIndexStart[i + 1] - obj1.meshSubsetIndexStart[i];
-	
+		if(!obj1.material[obj1.meshSubsetTexture[i]].transparent)
 			devcon->DrawIndexed(indexDrawAmount, indexStart, 0);
 	}
 
+	devcon->OMSetBlendState(transparent.Get(), 0, 0xffffffff);
+
+	for (long long int i = 0; i < obj1.meshSubsets; ++i)
+	{
+		//Set the grounds index buffer
+		devcon->IASetIndexBuffer(obj1.meshIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		//Set the grounds vertex buffer
+		devcon->IASetVertexBuffers(0, 1, obj1.meshVertexBuffer.GetAddressOf(), &obj1.stride, &obj1.offset);
+
+		//Set the WVP matrix and send it to the constant buffer in effect file
+		WVP = obj1.meshWorld * camView * camProjection;
+		cbPerObject.WVP = XMMatrixTranspose(WVP);
+		cbPerObject.world = XMMatrixTranspose(obj1.meshWorld);
+		cbPerObject.difColor = obj1.material[obj1.meshSubsetTexture[i]].difColor;
+		cbPerObject.hasTexture = obj1.material[obj1.meshSubsetTexture[i]].hasTexture;
+		devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
+		devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+		devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
+		if (obj1.material[obj1.meshSubsetTexture[i]].hasTexture)
+			devcon->PSSetShaderResources(0, 1, obj1.meshSRV[obj1.material[obj1.meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
+		devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
+
+		devcon->RSSetState(NoCull.Get());
+		int indexStart = obj1.meshSubsetIndexStart[i];
+		int indexDrawAmount = obj1.meshSubsetIndexStart[i + 1] - obj1.meshSubsetIndexStart[i];
+		if (obj1.material[obj1.meshSubsetTexture[i]].transparent)
+			devcon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	}
 
 	//2DƒŒƒ“ƒ_[
 	spriteBatch->Begin();

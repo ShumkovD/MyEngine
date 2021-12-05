@@ -25,7 +25,7 @@ Ni 1.000000
 d 0.000000
 illum 2
 map_Bump  textures\\bpng_NRM Kopie.jpg
-map_Kd  textures\\bpng.jpg
+map_Kd textures\\bpng.jpg
 map_Ks  textures\\bpng.jpg
 map_d  textures\\bpng_Schwaz_weistensel.jpg
 
