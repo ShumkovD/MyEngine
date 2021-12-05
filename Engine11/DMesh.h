@@ -24,6 +24,7 @@ struct SurfaceMaterial
 {
 	std::wstring matName;
 	XMFLOAT4 difColor;
+	XMFLOAT3 scale;
 	int texArrayIndex;
 	bool hasTexture;
 	bool transparent;

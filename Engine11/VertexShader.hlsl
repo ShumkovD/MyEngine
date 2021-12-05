@@ -5,6 +5,7 @@ cbuffer cbPerObject:register(b0)
 
 	float4 difColor;
 	bool hasTexture;
+	float3 textureScale;
 };
 
 
@@ -20,6 +21,7 @@ OUTPUT main(float4 pos : POSITION, float2 uv : TEXCOORD, float3 normal: NORMAL)
 	OUTPUT output;
 	output.pos = mul(pos, WVP);
 	output.normal = mul(normal, World);
-	output.uv = uv;
+	output.uv.x = (uv.x - 0.5) / textureScale.x + 0.5;
+	output.uv.y = (uv.y - 0.5) / textureScale.y +0.5;
 	return output;
 }

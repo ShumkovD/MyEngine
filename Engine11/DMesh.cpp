@@ -460,8 +460,24 @@ bool DMesh::LoadObjModel(std::wstring filename,
 								checkChar = fileIn.get();
 								if (checkChar == 'd')
 								{
-									std::wstring fileNamePath;
+									float sx = 1.0f;
+									float sy = 1.0f;
+									float sz = 1.0f;
 									fileIn.get();
+									checkChar = fileIn.get();
+									if (checkChar == '-')
+									{
+										checkChar = fileIn.get();
+										if (checkChar == 's')
+										{
+											fileIn.get();
+											fileIn >> sx >> sy >> sz;
+											fileIn.get();
+											checkChar = fileIn.get();
+										}
+									}
+									std::wstring fileNamePath;
+									fileNamePath += checkChar;
 									bool textFilePathEnd = false;
 									while (!textFilePathEnd)
 									{
@@ -488,15 +504,14 @@ bool DMesh::LoadObjModel(std::wstring filename,
 									if (!alreadyLoaded)
 									{
 										ComPtr<ID3D11ShaderResourceView> tempMeshRSV;
-										ComPtr<ID3D11Resource> Res;
-										hr = CreateWICTextureFromFile(dev.Get(), fileNamePath.c_str(), Res.GetAddressOf(), tempMeshRSV.GetAddressOf(), NULL);
-											
+										hr = CreateWICTextureFromFile(dev.Get(), fileNamePath.c_str(), NULL, tempMeshRSV.GetAddressOf(), NULL);
 										if (SUCCEEDED(hr))
 										{
 											textureNameArray.push_back(fileNamePath.c_str());
 											material[matCount - 1].texArrayIndex = meshSRV.size();
 											meshSRV.push_back(tempMeshRSV);
-											material[matCount - 1].hasTexture = true;
+											material[matCount - 1].hasTexture = true;			
+											material[matCount - 1].scale = XMFLOAT3(sx, sy, sz);
 										}
 #ifdef _DEBUG
 										else
