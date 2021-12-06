@@ -15,7 +15,7 @@
 - 透明度とピクセルクリッピングの対応、
 - ２Dレンダー「DirectXTKのSpriteBatch使用」、
 - 簡単なタイマー
-  - WICテクスチャーの対応「DirectXTK」、
+- WICテクスチャーの対応「DirectXTK」、
 - 入力、ライトニング、
 - obj.　拡張子のモデルの対応「DirectXTK」、
   
