@@ -19,7 +19,7 @@
 #include"DirectInput.h"
 #include"DMesh.h"
 
-#define WINDOW_HEIGHT 1024
+#define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
 #define MULTISAMPLE_COUNT 1
 
@@ -140,15 +140,6 @@ public:
 	//コンスタントバッファ
 	cbPerObjectBuffer cbPerObject;	
 	cbPerFrameBuffer cbPerFrame;
-	//Object Matrix
-	XMMATRIX cube1World;
-	XMMATRIX cube2World;
-	XMMATRIX cube3World;
-	//Update Matrixes
-	XMMATRIX translation;
-	
-	XMMATRIX scaling;
-	float rot = 0.005f;
 
 public:
 	double countsPerSecond = 0.0;

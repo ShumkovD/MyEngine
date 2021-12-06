@@ -63,7 +63,7 @@ public:
 	std::vector<std::wstring> textureNameArray;
 	std::vector<SurfaceMaterial> material;
 public:
-	bool LoadObjModel(std::wstring flename,
+	bool LoadObjModel(std::wstring filename,
 		bool isRHCoordSys, 
 		bool computeNormals,
 		ComPtr<ID3D11Device1> dev);

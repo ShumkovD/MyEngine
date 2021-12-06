@@ -1,12 +1,17 @@
 #include"MyEngine11.h"
 
-DMesh obj1;
+DMesh obj[4];
 
 void EngineClass::InitializeScene()
 {
-	if (!obj1.LoadObjModel(L"../Resources/model/Only_Spider_with_Animations_Export.obj", true, false, dev))
+	if (!obj[0].LoadObjModel(L"../Resources/model/plant.obj", true, false, dev))
 		return;
-
+	if (!obj[1].LoadObjModel(L"../Resources/model/girl OBJ.obj", true, false, dev))
+		return;
+	if (!obj[2].LoadObjModel(L"../Resources/model/spider.obj", true, false, dev))
+		return;
+	if (!obj[3].LoadObjModel(L"../Resources/model/tree.obj", true, false, dev))
+		return;
 	//カメラ
 	camPos = XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
 	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -15,13 +20,14 @@ void EngineClass::InitializeScene()
 	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)WINDOW_WIDTH / WINDOW_HEIGHT, 1.0f, 1000.0f);
 	//ライトニングの初期化
 	light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	light.ambient = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-float scale = 1.0f;
-float camPosIncrement = 1.0f;
+float scale = 0.0f;
+float camPosIncrement = 0.0f;
 float rotation = 0.0f;
+float rot = 0.0005f;
 
 void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *keyboardState, double time)
 {
@@ -29,6 +35,7 @@ void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *ke
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 	if (keyboardState[DIK_RIGHT] & 0x80)
 		scale += 1.0f*time;
+
 	if (keyboardState[DIK_LEFT] & 0x80)
 		scale -= 1.0f*time;
 	if (keyboardState[DIK_UP] & 0x80)
@@ -39,9 +46,16 @@ void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *ke
 		rotation += 1.0f * time;
 	if (keyboardState[DIK_Q] & 0x80)
 		rotation -= 1.0f * time;
+	if (keyboardState[DIK_A] & 0x80)
+		rot += 1.0f * time;
+	if (keyboardState[DIK_D] & 0x80)
+		rot -= 1.0f * time;
 
 	if (scale < 0.01f)
 		scale = 0.01f;
+
+	if (rot > 6.28f)
+		rot = 0.0f;
 
 	return;
 }
@@ -49,14 +63,40 @@ void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *ke
 
 void EngineClass::UpdateScene(double time)
 {
-	camTarget = XMVectorSet(0.0f, 0.0f, camPosIncrement, 0.0f);
-	camPos = XMVectorSet(0.0f, 3.0f, -8.0f + camPosIncrement, 0.0f);
+	
+	camTarget = XMVectorSet(0.0f, 0.0f, 5.0 + camPosIncrement, 0.0f);
+	camPos = XMVectorSet(0.0f, 1.0f, camPosIncrement, 0.0f);
 	camView = XMMatrixLookAtLH(camPos, camTarget, camUp);
-	obj1.meshWorld = XMMatrixIdentity();
-	XMMATRIX Scale = XMMatrixScaling(scale, scale, scale);
+	//
+	XMVECTOR axis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//植物
+	obj[0].meshWorld = XMMatrixIdentity();
+	XMMATRIX Scale = XMMatrixScaling(1.0f + scale, 1.0f + scale, 1.0f + scale);
+	XMMATRIX WorldRotation = XMMatrixRotationAxis(axis, rot);
 	XMMATRIX Rotation = XMMatrixRotationY(rotation);
-	XMMATRIX Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	obj1.meshWorld = Scale * Rotation * Translation;
+	XMMATRIX Translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
+	obj[0].meshWorld = Scale * Rotation * Translation * WorldRotation;
+	//キャラ
+	obj[1].meshWorld = XMMatrixIdentity();
+	Scale = XMMatrixScaling(1.0f + scale, 1.0f + scale, 1.0f + scale);
+	WorldRotation = XMMatrixRotationAxis(axis, rot);
+	Rotation = XMMatrixRotationY(rotation);
+	Translation = XMMatrixTranslation(0.0f, 0.0f, -4.0f);
+	obj[1].meshWorld = Scale * Rotation * Translation * WorldRotation;
+	//クモ
+	obj[2].meshWorld = XMMatrixIdentity();
+	Scale = XMMatrixScaling(0.01f + scale*0.01f, 0.01f + scale*0.01f, 0.01f + scale*0.01f);
+	WorldRotation = XMMatrixRotationAxis(axis, rot);
+	Rotation = XMMatrixRotationY(rotation);
+	Translation = XMMatrixTranslation(-4.0f, 0.0f, 0.0f);
+	obj[2].meshWorld = Scale * Rotation * Translation * WorldRotation;
+	//木
+	obj[3].meshWorld = XMMatrixIdentity();
+	Scale = XMMatrixScaling(0.05f + scale, 0.05f + scale, 0.05f + scale);
+	WorldRotation = XMMatrixRotationAxis(axis, rot);
+	Rotation = XMMatrixRotationY(rotation);
+	Translation = XMMatrixTranslation(4.0f, 0.0f, 0.0f);
+	obj[3].meshWorld = Scale * Rotation * Translation * WorldRotation;
 }
 
 void EngineClass::Render()
@@ -79,62 +119,68 @@ void EngineClass::Render()
 	devcon->PSSetConstantBuffers1(0, 1, constantPerFrameBuffer.GetAddressOf(), 0, 0);
 	//不透明なメッシュを読み込む
 	devcon->OMSetBlendState(0, 0, 0xffffffff);
-	for (long long int i = 0; i < obj1.meshSubsets; ++i)
+	for (int o = 0; o < 4; o++)
 	{
-		//Set the grounds index buffer
-		devcon->IASetIndexBuffer(obj1.meshIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-		//Set the grounds vertex buffer
-		devcon->IASetVertexBuffers(0, 1, obj1.meshVertexBuffer.GetAddressOf(), &obj1.stride, &obj1.offset);
+		for (long long int i = 0; i < obj[o].meshSubsets; ++i)
+		{
+			//Set the grounds index buffer
+			devcon->IASetIndexBuffer(obj[o].meshIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+			//Set the grounds vertex buffer
+			devcon->IASetVertexBuffers(0, 1, obj[o].meshVertexBuffer.GetAddressOf(), &obj[o].stride, &obj[o].offset);
 
-		//Set the WVP matrix and send it to the constant buffer in effect file
-		WVP = obj1.meshWorld * camView * camProjection;
-		cbPerObject.WVP = XMMatrixTranspose(WVP);
-		cbPerObject.world = XMMatrixTranspose(obj1.meshWorld);
-		cbPerObject.difColor = obj1.material[obj1.meshSubsetTexture[i]].difColor;
-		cbPerObject.textureScale = obj1.material[obj1.meshSubsetTexture[i]].scale;
-		cbPerObject.hasTexture = obj1.material[obj1.meshSubsetTexture[i]].hasTexture;
-		devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
-		devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
-		devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
-		if (obj1.material[obj1.meshSubsetTexture[i]].hasTexture)
-			devcon->PSSetShaderResources(0, 1, obj1.meshSRV[obj1.material[obj1.meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
-		devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
+			//Set the WVP matrix and send it to the constant buffer in effect file
+			WVP = obj[o].meshWorld * camView * camProjection;
+			cbPerObject.WVP = XMMatrixTranspose(WVP);
+			cbPerObject.world = XMMatrixTranspose(obj[o].meshWorld);
+			cbPerObject.difColor = obj[o].material[obj[o].meshSubsetTexture[i]].difColor;
+			cbPerObject.textureScale = obj[o].material[obj[o].meshSubsetTexture[i]].scale;
+			cbPerObject.hasTexture = obj[o].material[obj[o].meshSubsetTexture[i]].hasTexture;
+			devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
+			devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+			devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
+			if (obj[o].material[obj[o].meshSubsetTexture[i]].hasTexture)
+				devcon->PSSetShaderResources(0, 1, obj[o].meshSRV[obj[o].material[obj[o].meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
+			devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 
-		devcon->RSSetState(NoCull.Get());
-		int indexStart = obj1.meshSubsetIndexStart[i];
-		int indexDrawAmount = obj1.meshSubsetIndexStart[i + 1] - obj1.meshSubsetIndexStart[i];
-		if(!obj1.material[obj1.meshSubsetTexture[i]].transparent)
-			devcon->DrawIndexed(indexDrawAmount, indexStart, 0);
+			devcon->RSSetState(NoCull.Get());
+			int indexStart = obj[o].meshSubsetIndexStart[i];
+			int indexDrawAmount = obj[o].meshSubsetIndexStart[i + 1] - obj[o].meshSubsetIndexStart[i];
+			if (!obj[o].material[obj[o].meshSubsetTexture[i]].transparent)
+				devcon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}
 	}
+
 	//透明なメッシュを読み込む
 	devcon->OMSetBlendState(transparent.Get(), 0, 0xffffffff);
-
-	for (long long int i = 0; i < obj1.meshSubsets; ++i)
+	for (int o = 0; o < 4; o++)
 	{
-		//Set the grounds index buffer
-		devcon->IASetIndexBuffer(obj1.meshIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-		//Set the grounds vertex buffer
-		devcon->IASetVertexBuffers(0, 1, obj1.meshVertexBuffer.GetAddressOf(), &obj1.stride, &obj1.offset);
+		for (long long int i = 0; i < obj[o].meshSubsets; ++i)
+		{
+			//Set the grounds index buffer
+			devcon->IASetIndexBuffer(obj[o].meshIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+			//Set the grounds vertex buffer
+			devcon->IASetVertexBuffers(0, 1, obj[o].meshVertexBuffer.GetAddressOf(), &obj[o].stride, &obj[o].offset);
 
-		//Set the WVP matrix and send it to the constant buffer in effect file
-		WVP = obj1.meshWorld * camView * camProjection;
-		cbPerObject.WVP = XMMatrixTranspose(WVP);
-		cbPerObject.world = XMMatrixTranspose(obj1.meshWorld);
-		cbPerObject.textureScale = obj1.material[obj1.meshSubsetTexture[i]].scale;
-		cbPerObject.difColor = obj1.material[obj1.meshSubsetTexture[i]].difColor;
-		cbPerObject.hasTexture = obj1.material[obj1.meshSubsetTexture[i]].hasTexture;
-		devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
-		devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
-		devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
-		if (obj1.material[obj1.meshSubsetTexture[i]].hasTexture)
-			devcon->PSSetShaderResources(0, 1, obj1.meshSRV[obj1.material[obj1.meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
-		devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
+			//Set the WVP matrix and send it to the constant buffer in effect file
+			WVP = obj[o].meshWorld * camView * camProjection;
+			cbPerObject.WVP = XMMatrixTranspose(WVP);
+			cbPerObject.world = XMMatrixTranspose(obj[o].meshWorld);
+			cbPerObject.difColor = obj[o].material[obj[o].meshSubsetTexture[i]].difColor;
+			cbPerObject.textureScale = obj[o].material[obj[o].meshSubsetTexture[i]].scale;
+			cbPerObject.hasTexture = obj[o].material[obj[o].meshSubsetTexture[i]].hasTexture;
+			devcon->UpdateSubresource(constantBuffer.Get(), 0, NULL, &cbPerObject, 0, 0);
+			devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+			devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
+			if (obj[o].material[obj[o].meshSubsetTexture[i]].hasTexture)
+				devcon->PSSetShaderResources(0, 1, obj[o].meshSRV[obj[o].material[obj[o].meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
+			devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 
-		devcon->RSSetState(NoCull.Get());
-		int indexStart = obj1.meshSubsetIndexStart[i];
-		int indexDrawAmount = obj1.meshSubsetIndexStart[i + 1] - obj1.meshSubsetIndexStart[i];
-		if (obj1.material[obj1.meshSubsetTexture[i]].transparent)
-			devcon->DrawIndexed(indexDrawAmount, indexStart, 0);
+			devcon->RSSetState(NoCull.Get());
+			int indexStart = obj[o].meshSubsetIndexStart[i];
+			int indexDrawAmount = obj[o].meshSubsetIndexStart[i + 1] - obj[o].meshSubsetIndexStart[i];
+			if (obj[o].material[obj[o].meshSubsetTexture[i]].transparent)
+				devcon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}
 	}
 
 	//2Dレンダー
