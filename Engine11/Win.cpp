@@ -86,15 +86,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE prevInstance, _
 			DestroyWindow(hwnd);
 			break;
 		}
-		time = eg.Timer();
-		//シーンの初期化
-		eg.SettingWorld();
-		//入力の読み込み
-		input.DetectInput(time, hwnd);
-		//エンジン処理
-		eg.UpdateScene(time);
-		//エンジ描画
-		eg.Render();
+		if (GetActiveWindow() == hwnd)
+		{
+			time = eg.Timer();
+			//シーンの初期化
+			eg.SettingWorld();
+			//入力の読み込み
+			input.DetectInput(time, hwnd);
+			//エンジン処理
+			eg.UpdateScene(time);
+			//エンジ描画
+			eg.Render();
+		}
 	}
 	CoUninitialize();
 	input.DInputRelease();

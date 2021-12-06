@@ -250,7 +250,6 @@ bool EngineClass::CreateDepthStencilView()
 		OutputDebugStringA("\nFailed to create Depth Stencil View\n\n");
 		return false;
 	}
-
 	return true;
 }
 //基準設定、各フレーム描画の前に設定します

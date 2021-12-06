@@ -22,7 +22,7 @@ bool DirectInput::DInputInitialize(HINSTANCE hInstance, HWND hwnd)
 	hr = DInput->CreateDevice(GUID_SysMouse,
 		&DIMouse,
 		NULL);
-
+	
 	if (FAILED(hr))
 	{
 		OutputDebugStringA("\nFailed to Create Mouse\n\n");
@@ -47,7 +47,10 @@ void DirectInput::DetectInput(double time, HWND hwnd)
 	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
 
 	SceneInput(hwnd, currentMouseState, keyboardState, time);
+	return;
 }
+
+
 
 void DirectInput::DInputRelease()
 {

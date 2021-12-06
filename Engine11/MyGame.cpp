@@ -38,9 +38,9 @@ void DirectInput::SceneInput(HWND hwnd, DIMOUSESTATE currentMouseState, BYTE *ke
 
 	if (keyboardState[DIK_LEFT] & 0x80)
 		scale -= 1.0f*time;
-	if (keyboardState[DIK_UP] & 0x80)
+	if (keyboardState[DIK_W] & 0x80)
 		camPosIncrement += 3.0f * time;
-	if (keyboardState[DIK_DOWN] & 0x80)
+	if (keyboardState[DIK_S] & 0x80)
 		camPosIncrement -= 3.0f * time;
 	if (keyboardState[DIK_E] & 0x80)
 		rotation += 1.0f * time;
