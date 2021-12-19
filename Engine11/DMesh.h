@@ -15,20 +15,11 @@
 #include "ScreenGrab.h"
 #include <wincodec.h>
 #endif
+#include "DMaterial.h"
 
 using namespace Microsoft;
 using namespace WRL;
 using namespace DirectX;
-
-struct SurfaceMaterial
-{
-	std::wstring matName;
-	XMFLOAT4 difColor;
-	XMFLOAT3 scale;
-	int texArrayIndex;
-	bool hasTexture;
-	bool transparent;
-};
 
 struct Vertex
 {
@@ -61,7 +52,7 @@ public:
 	std::vector<int> meshSubsetTexture;
 	std::vector<ComPtr<ID3D11ShaderResourceView>> meshSRV;
 	std::vector<std::wstring> textureNameArray;
-	std::vector<SurfaceMaterial> material;
+	std::vector<DMaterial> material;
 public:
 	bool LoadObjModel(std::wstring filename,
 		bool isRHCoordSys, 

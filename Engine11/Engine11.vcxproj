@@ -149,15 +149,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DMaterial.cpp" />
     <ClCompile Include="DMesh.cpp" />
+    <ClCompile Include="ConsoleDebug.cpp" />
     <ClCompile Include="MyEngine11.cpp" />
     <ClCompile Include="MyGame.cpp" />
     <ClCompile Include="DirectInput.cpp" />
+    <ClCompile Include="DTexture.cpp" />
     <ClCompile Include="Win.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConsoleDebug.h" />
     <ClInclude Include="DirectInput.h" />
+    <ClInclude Include="DMaterial.h" />
     <ClInclude Include="DMesh.h" />
+    <ClInclude Include="DTexture.h" />
     <ClInclude Include="MyEngine11.h" />
   </ItemGroup>
   <ItemGroup>

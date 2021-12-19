@@ -139,7 +139,7 @@ void EngineClass::Render()
 			devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 			devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
 			if (obj[o].material[obj[o].meshSubsetTexture[i]].hasTexture)
-				devcon->PSSetShaderResources(0, 1, obj[o].meshSRV[obj[o].material[obj[o].meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
+				devcon->PSSetShaderResources(0, 1, obj[o].material[obj[o].meshSubsetTexture[i]].texture.textureSRV.GetAddressOf());
 			devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 
 			devcon->RSSetState(NoCull.Get());
@@ -172,7 +172,7 @@ void EngineClass::Render()
 			devcon->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 			devcon->PSSetConstantBuffers1(1, 1, constantBuffer.GetAddressOf(), 0, 0);
 			if (obj[o].material[obj[o].meshSubsetTexture[i]].hasTexture)
-				devcon->PSSetShaderResources(0, 1, obj[o].meshSRV[obj[o].material[obj[o].meshSubsetTexture[i]].texArrayIndex].GetAddressOf());
+				devcon->PSSetShaderResources(0, 1, obj[o].material[obj[o].meshSubsetTexture[i]].texture.textureSRV.GetAddressOf());
 			devcon->PSSetSamplers(0, 1, texSamplerState.GetAddressOf());
 
 			devcon->RSSetState(NoCull.Get());

@@ -21,13 +21,14 @@ cbuffer cbPerObject: register(b1)
 {
 	float4x4 WVP;
 	float4x4 World;
-
 	float4 difColor;
 	bool hasTexture;
 };
 
 SamplerState ObjSamplerState : register(s0);
 Texture2D ObjTexture: register(t0);
+
+
 
 float4 main(OUTPUT input) : SV_TARGET
 {
