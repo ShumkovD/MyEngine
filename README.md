@@ -1,4 +1,5 @@
 # MyEngine
+紹介動画：　https://youtu.be/YVKLjM9FT9g
 プロジェクトに *submodule* が入っているために、ダウンロードする際 *git clone --recursive* を使って下さい。
 
 実行すると *ARM* ではなく *x64* か *x86* を選んでください。
